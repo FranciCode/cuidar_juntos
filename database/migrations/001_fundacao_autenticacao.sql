@@ -1,0 +1,16 @@
+USE cuidar_juntos;
+
+-- Para bancos criados antes da T1. Execute uma vez; ignore "Duplicate column" se já aplicado.
+ALTER TABLE USUARIO ADD COLUMN tentativas_falhas INT UNSIGNED NOT NULL DEFAULT 0;
+ALTER TABLE USUARIO ADD COLUMN bloqueado_ate DATETIME NULL;
+ALTER TABLE PESSOA_ASSISTIDA ADD COLUMN status ENUM('ATIVO','INATIVO') NOT NULL DEFAULT 'ATIVO';
+ALTER TABLE ATIVIDADE MODIFY COLUMN status ENUM('PENDENTE','ASSUMIDA','CONCLUIDA','CANCELADA') NOT NULL DEFAULT 'PENDENTE';
+
+CREATE TABLE IF NOT EXISTS USUARIO_PESSOA (
+  id_usuario INT UNSIGNED NOT NULL,
+  id_pessoa INT UNSIGNED NOT NULL,
+  pode_registrar_administracao BOOLEAN NOT NULL DEFAULT FALSE,
+  PRIMARY KEY (id_usuario, id_pessoa),
+  CONSTRAINT fk_up_usuario FOREIGN KEY (id_usuario) REFERENCES USUARIO(id_usuario),
+  CONSTRAINT fk_up_pessoa FOREIGN KEY (id_pessoa) REFERENCES PESSOA_ASSISTIDA(id_pessoa)
+);
