@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pessoa assistida - Cuidar Juntos</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+    .erro { color: #b00020; min-height: 1.2em; }
+    label { display: block; margin-top: .6rem; }
+    button { margin-top: .8rem; margin-right: .4rem; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <h1>Pessoa assistida</h1>
+  <p><a href="/pages/index.html">Início</a></p>
+
+  <section id="dados" aria-live="polite">
+    <p id="vazio" hidden>Nenhuma pessoa cadastrada</p>
+    <dl id="pessoa" hidden>
+      <dt>Nome</dt><dd id="p-nome"></dd>
+      <dt>Nascimento</dt><dd id="p-nascimento"></dd>
+      <dt>Status</dt><dd id="p-status"></dd>
+    </dl>
+    <div id="acoes-admin" hidden>
+      <button type="button" id="btn-nova">Nova pessoa</button>
+      <button type="button" id="btn-editar" hidden>Editar</button>
+      <button type="button" id="btn-desativar" hidden>Desativar</button>
+      <button type="button" id="btn-reativar" hidden>Reativar</button>
+    </div>
+  </section>
+
+  <form id="form" hidden novalidate>
+    <h2 id="form-titulo"></h2>
+    <label>Nome <input type="text" id="f-nome" maxlength="120" required></label>
+    <label>Data de nascimento <input type="date" id="f-nascimento" required></label>
+    <label id="l-consentimento"><input type="checkbox" id="f-consentimento"> Declaro que há consentimento para o cadastro</label>
+    <p class="erro" id="erro" role="alert"></p>
+    <button type="submit">Salvar</button>
+    <button type="button" id="btn-cancelar">Cancelar</button>
+  </form>
+
+  <p class="erro" id="erro-geral" role="alert"></p>
+  <script src="/js/pessoa.js"></script>
+</body>
+</html>
