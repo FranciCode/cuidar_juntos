@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Atividades - Cuidar Juntos</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border-bottom: 1px solid #ccc; padding: .4rem; text-align: left; }
+    .erro { color: #b00020; min-height: 1.2em; }
+    .aviso { color: #7a5200; min-height: 1.2em; }
+    label { display: block; margin-top: .6rem; }
+    button { margin-top: .4rem; margin-right: .3rem; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <h1>Atividades</h1>
+  <p><a href="/pages/index.html">Início</a></p>
+
+  <p class="erro" id="erro-geral" role="alert"></p>
+  <p class="aviso" id="aviso" role="status"></p>
+  <button type="button" id="btn-nova" hidden>Nova atividade</button>
+
+  <form id="form" hidden novalidate>
+    <h2 id="form-titulo"></h2>
+    <label id="l-pessoa">Pessoa assistida <select id="f-pessoa"></select></label>
+    <label>Título <input type="text" id="f-titulo" maxlength="150" required></label>
+    <label>Descrição <textarea id="f-descricao" maxlength="500" rows="3"></textarea></label>
+    <label>Data e hora <input type="datetime-local" id="f-data"></label>
+    <p class="erro" id="erro" role="alert"></p>
+    <button type="submit">Salvar</button>
+    <button type="button" id="btn-cancelar-form">Cancelar</button>
+  </form>
+
+  <p id="vazio" hidden>Nenhuma atividade cadastrada</p>
+  <table id="tabela" hidden>
+    <thead>
+      <tr><th>Título</th><th>Data e hora</th><th>Status</th><th>Responsável</th><th>Ações</th></tr>
+    </thead>
+    <tbody id="corpo"></tbody>
+  </table>
+  <script src="/js/atividades.js"></script>
+</body>
+</html>
