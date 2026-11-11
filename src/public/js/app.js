@@ -40,7 +40,7 @@ function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch]));
 }
 function statusLabel(status) {
-  return ({ PENDENTE: "Pendente", ASSUMIDA: "Assumida", CONCLUIDA: "Concluída" })[status] || status;
+  return ({ PENDENTE: "Pendente", ASSUMIDA: "Assumida", CANCELADA: "Cancelada", CONCLUIDA: "Concluída" })[status] || status;
 }
 async function loadActivities() {
   const data = await api("/api/atividades");
@@ -50,7 +50,7 @@ async function loadActivities() {
   $("doneCount").textContent = activities.filter(a => a.status === "CONCLUIDA").length;
   $("activityList").innerHTML = activities.length ? activities.map(a => {
     const canAssume = a.status === "PENDENTE";
-    const isMine = Number(a.responsavel_id) === Number(currentUser.id);
+    const isMine = Number(a.id_responsavel) === Number(currentUser.id) || currentUser.perfil === "ADMIN";
     const canRelease = a.status === "ASSUMIDA" && isMine;
     const canComplete = a.status === "ASSUMIDA" && isMine;
     const actions = [
@@ -60,9 +60,9 @@ async function loadActivities() {
     ].filter(Boolean).join(" ");
     return `<article class="activity-item">
       <div><div class="activity-title">${escapeHtml(a.titulo)}</div>
-      <div class="activity-meta">${escapeHtml(a.pessoa_assistida)} · ${escapeHtml(formatDate(a.data_hora))}</div>
+      <div class="activity-meta">${escapeHtml(formatDate(a.data_hora))}</div>
       ${a.descricao ? `<div class="small mt-1">${escapeHtml(a.descricao)}</div>` : ""}
-      <div class="small text-secondary mt-1">Responsável: ${escapeHtml(a.responsavel_nome || "Ainda não assumida")}</div></div>
+      <div class="small text-secondary mt-1">Responsável: ${escapeHtml(a.responsavel || "Ainda não assumida")}</div></div>
       <div class="d-flex flex-wrap align-items-center gap-2"><span class="status">${statusLabel(a.status)}</span>${actions}</div>
     </article>`;
   }).join("") : '<p class="text-secondary mb-0">Nenhuma atividade cadastrada.</p>';
@@ -116,7 +116,7 @@ $("activityList").addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-action]");
   if (!button) return;
   try {
-    await api(`/api/atividades/${button.dataset.id}/${button.dataset.action}`, { method: "POST", body: "{}" });
+    await api(`/api/atividades/${button.dataset.id}/${button.dataset.action}`, { method: "PATCH", body: "{}" });
     showMessage($("appMessage"), "Atividade atualizada.", "success");
     await refresh();
   } catch (error) { showMessage($("appMessage"), error.message); }
