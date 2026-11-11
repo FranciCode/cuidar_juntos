@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cuidar Juntos</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 480px; margin: 2rem auto; padding: 0 1rem; }
+    .erro { color: #b00020; min-height: 1.2em; }
+    label { display: block; margin-top: .6rem; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <h1>Cuidar Juntos</h1>
+
+  <form id="login" novalidate>
+    <label>E-mail <input type="email" id="email" required></label>
+    <label>Senha <input type="password" id="senha" required></label>
+    <p class="erro" id="erro-login" role="alert"></p>
+    <button type="submit">Entrar</button>
+  </form>
+
+  <nav id="menu" hidden>
+    <p>Olá, <span id="nome"></span>.</p>
+    <ul>
+      <li><a href="/pages/pessoa.html">Pessoa assistida</a></li>
+      <li id="item-usuarios" hidden><a href="/pages/usuarios.html">Usuários</a></li>
+    </ul>
+    <button type="button" id="sair">Sair</button>
+  </nav>
+  <script src="/js/app.js"></script>
+</body>
+</html>

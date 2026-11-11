@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Usuários - Cuidar Juntos</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: .4rem; text-align: left; }
+    .erro { color: #b00020; min-height: 1.2em; }
+    label { display: block; margin-top: .6rem; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <h1>Usuários</h1>
+  <p><a href="/pages/index.html">Início</a></p>
+  <p class="erro" id="erro-tabela" role="alert"></p>
+  <p id="vazio" hidden>Nenhum usuário cadastrado</p>
+  <table id="tabela" hidden>
+    <thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th><th>Ações</th></tr></thead>
+    <tbody id="corpo"></tbody>
+  </table>
+  <button type="button" id="btn-novo">Novo usuário</button>
+
+  <form id="form" hidden novalidate>
+    <h2 id="form-titulo"></h2>
+    <label>Nome <input type="text" id="f-nome" required></label>
+    <label id="l-email">E-mail <input type="email" id="f-email"></label>
+    <label id="l-senha">Senha (mínimo 8 caracteres) <input type="password" id="f-senha"></label>
+    <label>Perfil
+      <select id="f-perfil"><option value="ADMIN">ADMIN</option><option value="COLABORADOR">COLABORADOR</option></select>
+    </label>
+    <label id="l-pode"><input type="checkbox" id="f-pode"> Pode registrar administração</label>
+    <p class="erro" id="erro" role="alert"></p>
+    <button type="submit">Salvar</button>
+    <button type="button" id="btn-cancelar">Cancelar</button>
+  </form>
+  <script src="/js/usuarios.js"></script>
+</body>
+</html>
