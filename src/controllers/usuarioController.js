@@ -1,22 +1,44 @@
-const usuarioService = require("../services/usuarioService");
+﻿const usuarioService = require("../services/usuarioService");
 
-function handler(getPool, acao) {
-  return async (req, res) => {
-    try {
-      const db = await getPool();
-      const result = await acao(db, req);
-      res.status(result.status).json(result.body);
-    } catch (_error) {
-      res.status(500).json({ error: "Não foi possível concluir a operação." });
-    }
-  };
+function tratar(res, error) {
+  if (error instanceof usuarioService.HttpError) return res.status(error.status).json({ error: error.message });
+  return res.status(500).json({ error: "Não foi possível concluir a operação." });
 }
 
-const listar = (getPool) => handler(getPool, (db) => usuarioService.listar(db));
-const criar = (getPool) => handler(getPool, (db, req) => usuarioService.criar(db, req.session.user, req.body || {}));
-const editar = (getPool) =>
-  handler(getPool, (db, req) => usuarioService.editar(db, req.session.user, Number(req.params.id), req.body || {}));
-const alterarStatus = (getPool) =>
-  handler(getPool, (db, req) => usuarioService.alterarStatus(db, req.session.user, Number(req.params.id), req.body || {}));
+function idParam(req) {
+  const id = Number(req.params.id);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+const listar = (getPool) => async (_req, res) => {
+  try {
+    res.json({ usuarios: await usuarioService.listar(await getPool()) });
+  } catch (error) { tratar(res, error); }
+};
+
+const criar = (getPool) => async (req, res) => {
+  try {
+    const usuario = await usuarioService.criar(await getPool(), req.session.user, req.body || {});
+    res.status(201).json({ usuario });
+  } catch (error) { tratar(res, error); }
+};
+
+const editar = (getPool) => async (req, res) => {
+  const id = idParam(req);
+  if (!id) return res.status(404).json({ error: "Usuário não encontrado." });
+  try {
+    const usuario = await usuarioService.editar(await getPool(), req.session.user, id, req.body || {});
+    res.json({ usuario });
+  } catch (error) { tratar(res, error); }
+};
+
+const alterarStatus = (getPool) => async (req, res) => {
+  const id = idParam(req);
+  if (!id) return res.status(404).json({ error: "Usuário não encontrado." });
+  try {
+    const usuario = await usuarioService.alterarStatus(await getPool(), req.session.user, id, (req.body || {}).status);
+    res.json({ usuario });
+  } catch (error) { tratar(res, error); }
+};
 
 module.exports = { listar, criar, editar, alterarStatus };

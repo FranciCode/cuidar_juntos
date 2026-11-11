@@ -1,8 +1,7 @@
-const express = require("express");
+﻿const express = require("express");
 const usuarioController = require("../controllers/usuarioController");
-const { requireAuth, requireAdmin } = require("../middlewares/auth");
 
-module.exports = (getPool) => {
+module.exports = (getPool, requireAuth, requireAdmin) => {
   const router = express.Router();
   router.use(requireAuth, requireAdmin);
   router.get("/", usuarioController.listar(getPool));
