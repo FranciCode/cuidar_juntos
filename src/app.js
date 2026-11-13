@@ -1,4 +1,4 @@
-require("dotenv").config();
+﻿require("dotenv").config();
 
 const express = require("express");
 const session = require("express-session");
@@ -70,6 +70,7 @@ app.use("/api/login", require("./routes/auth")(getPool));
 app.use("/api/usuarios", require("./routes/usuarios")(getPool, requireAuth, requireAdmin));
 
 app.use("/api/atividades", require("./routes/atividades")(getPool));
+app.use("/api/compromissos", require("./routes/compromissos")(getPool));
 app.use("/api/pessoas", require("./routes/pessoas")(getPool));
 app.use("/api/medicamentos", require("./routes/medicamentos")(getPool));
 
