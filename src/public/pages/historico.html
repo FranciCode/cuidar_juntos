@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Histórico - Cuidar Juntos</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border-bottom: 1px solid #ccc; padding: .4rem; text-align: left; }
+    .erro { color: #b00020; min-height: 1.2em; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <h1>Histórico</h1>
+  <p><a href="/pages/index.html">Início</a> · <a href="/pages/painel.html">Painel</a> · <a href="/pages/agenda.html">Agenda</a></p>
+  <p class="erro" id="erro" role="alert"></p>
+  <p id="vazio" hidden>Nenhum registro disponível</p>
+  <table id="tabela">
+    <thead><tr><th>Ação</th><th>Responsável</th><th>Data e hora</th><th>Detalhes</th></tr></thead>
+    <tbody id="registros"></tbody>
+  </table>
+  <p>
+    <button type="button" id="btn-anterior">Anterior</button>
+    <button type="button" id="btn-proxima">Próxima</button>
+    <span id="pagina-info"></span>
+  </p>
+  <script src="/js/historico.js"></script>
+</body>
+</html>

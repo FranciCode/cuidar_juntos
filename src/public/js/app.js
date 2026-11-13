@@ -69,8 +69,8 @@ async function loadActivities() {
 }
 async function loadHistory() {
   const data = await api("/api/historico");
-  $("historyList").innerHTML = data.historico.length ? data.historico.map(h =>
-    `<div class="history-row"><strong>${escapeHtml(h.usuario_nome)}</strong> · ${escapeHtml(h.acao.replaceAll("_", " ").toLowerCase())}<br><span>${escapeHtml(formatDate(h.data_hora))}</span></div>`
+  $("historyList").innerHTML = data.registros.length ? data.registros.map(h =>
+    `<div class="history-row"><strong>${escapeHtml(h.responsavel)}</strong> · ${escapeHtml(h.acao.replaceAll("_", " ").toLowerCase())}<br><span>${escapeHtml(formatDate(h.data_hora))}</span></div>`
   ).join("") : "Nenhuma ação registrada até o momento.";
 }
 async function refresh() {

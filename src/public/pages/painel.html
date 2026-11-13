@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel - Cuidar Juntos</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+    .contagens { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .contagens div { border: 1px solid #ccc; padding: .6rem 1rem; min-width: 8rem; }
+    .contagens strong { display: block; font-size: 1.6rem; }
+    .erro { color: #b00020; min-height: 1.2em; }
+  </style>
+</head>
+<body>
+  <h1>Painel</h1>
+  <p><a href="/pages/index.html">Início</a> · <a href="/pages/agenda.html">Agenda</a> · <a href="/pages/historico.html">Histórico</a></p>
+  <p class="erro" id="erro" role="alert"></p>
+  <div class="contagens">
+    <div><strong id="c-pendentes">0</strong>Pendentes</div>
+    <div><strong id="c-assumidas">0</strong>Em andamento</div>
+    <div><strong id="c-concluidas">0</strong>Concluídas</div>
+  </div>
+  <h2>Próximos compromissos</h2>
+  <p id="vazio" hidden>Nenhum compromisso próximo</p>
+  <ul id="lista"></ul>
+  <script src="/js/painel.js"></script>
+</body>
+</html>
