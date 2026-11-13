@@ -5,10 +5,11 @@ const session = require("express-session");
 const helmet = require("helmet");
 const path = require("path");
 const mysql = require("mysql2/promise");
+const loginLimiter = require("./middlewares/loginLimiter");
 
 const app = express();
 
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(session({
@@ -66,7 +67,7 @@ app.get("/api/health", async (_req, res) => {
   }
 });
 
-app.use("/api/login", require("./routes/auth")(getPool));
+app.use("/api/login", loginLimiter, require("./routes/auth")(getPool));
 app.use("/api/usuarios", require("./routes/usuarios")(getPool, requireAuth, requireAdmin));
 
 app.use("/api/atividades", require("./routes/atividades")(getPool));

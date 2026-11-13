@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest"
+    "test": "jest --coverage"
   },
   "engines": {
     "node": ">=20"
@@ -16,9 +16,24 @@
     "connect-session-sequelize": "^7.1.7",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "express-rate-limit": "^8.7.4",
     "express-session": "^1.18.1",
     "helmet": "^8.0.0",
     "mysql2": "^3.12.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "roots": ["<rootDir>/tests"],
+    "collectCoverageFrom": [
+      "src/services/**/*.js",
+      "src/middlewares/**/*.js",
+      "src/controllers/**/*.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "lines": 80
+      }
+    }
   },
   "devDependencies": {
     "jest": "^30.5.2",
