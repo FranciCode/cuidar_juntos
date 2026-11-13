@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agenda - Cuidar Juntos</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border-bottom: 1px solid #ccc; padding: .4rem; text-align: left; }
+    .erro { color: #b00020; min-height: 1.2em; }
+    label { margin-right: 1rem; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <h1>Agenda</h1>
+  <p><a href="/pages/index.html">Início</a> · <a href="/pages/painel.html">Painel</a> · <a href="/pages/historico.html">Histórico</a></p>
+  <p class="erro" id="erro" role="alert"></p>
+  <form id="filtros" novalidate>
+    <label>De <input type="date" id="f-de"></label>
+    <label>Até <input type="date" id="f-ate"></label>
+    <label>Status
+      <select id="f-status">
+        <option value="">Todos</option>
+        <option value="PENDENTE">Pendente</option>
+        <option value="ASSUMIDA">Assumida</option>
+        <option value="CONCLUIDA">Concluída</option>
+        <option value="CANCELADA">Cancelada</option>
+      </select>
+    </label>
+    <button type="submit">Filtrar</button>
+    <button type="button" id="btn-limpar">Limpar</button>
+  </form>
+  <p id="vazio" hidden>Nenhum item na agenda</p>
+  <table id="tabela">
+    <thead><tr><th>Origem</th><th>Título</th><th>Data e hora</th><th>Status</th><th>Pessoa</th></tr></thead>
+    <tbody id="itens"></tbody>
+  </table>
+  <script src="/js/agenda.js"></script>
+</body>
+</html>

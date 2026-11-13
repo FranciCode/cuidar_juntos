@@ -1,4 +1,4 @@
-﻿require("dotenv").config();
+require("dotenv").config();
 
 const express = require("express");
 const session = require("express-session");
@@ -73,6 +73,9 @@ app.use("/api/atividades", require("./routes/atividades")(getPool));
 app.use("/api/compromissos", require("./routes/compromissos")(getPool));
 app.use("/api/pessoas", require("./routes/pessoas")(getPool));
 app.use("/api/medicamentos", require("./routes/medicamentos")(getPool));
+app.use("/api/agenda", require("./routes/agenda")(getPool));
+app.use("/api/painel", require("./routes/painel")(getPool));
+app.use("/api/historico", require("./routes/historico")(getPool));
 
 app.post("/api/logout", (req, res) => {
   req.session.destroy(() => res.json({ ok: true }));
@@ -81,20 +84,6 @@ app.post("/api/logout", (req, res) => {
 app.get("/api/me", (req, res) => {
   if (!req.session.user) return res.status(401).json({ error: "NÃ£o autenticado." });
   res.json({ user: req.session.user });
-});
-
-app.get("/api/historico", requireAuth, async (_req, res) => {
-  try {
-    const db = await getPool();
-    const [rows] = await db.execute(
-      `SELECT h.acao, h.entidade, h.id_registro, h.data_hora, h.detalhes, u.nome AS usuario_nome
-       FROM HISTORICO h JOIN USUARIO u ON u.id_usuario = h.id_usuario
-       ORDER BY h.data_hora DESC LIMIT 100`
-    );
-    res.json({ historico: rows });
-  } catch (_error) {
-    res.status(500).json({ error: "NÃ£o foi possÃ­vel consultar o histÃ³rico." });
-  }
 });
 
 app.get("*", (_req, res) => res.sendFile(path.join(__dirname, "public", "pages", "index.html")));
