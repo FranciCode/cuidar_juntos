@@ -71,6 +71,7 @@ app.use("/api/usuarios", require("./routes/usuarios")(getPool, requireAuth, requ
 
 app.use("/api/atividades", require("./routes/atividades")(getPool));
 app.use("/api/pessoas", require("./routes/pessoas")(getPool));
+app.use("/api/medicamentos", require("./routes/medicamentos")(getPool));
 
 app.post("/api/logout", (req, res) => {
   req.session.destroy(() => res.json({ ok: true }));

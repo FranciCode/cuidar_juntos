@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Medicamentos - Cuidar Juntos</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border-bottom: 1px solid #ccc; padding: .4rem; text-align: left; }
+    .erro { color: #b00020; min-height: 1.2em; }
+    label { display: block; margin-top: .6rem; }
+    button { margin-top: .4rem; margin-right: .3rem; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <h1>Medicamentos</h1>
+  <p><a href="/pages/index.html">Início</a></p>
+
+  <p class="erro" id="erro-geral" role="alert"></p>
+  <button type="button" id="btn-novo" hidden>Novo medicamento</button>
+
+  <form id="form" hidden novalidate>
+    <h2 id="form-titulo"></h2>
+    <label id="l-pessoa">Pessoa assistida <select id="f-pessoa"></select></label>
+    <label>Nome <input type="text" id="f-nome" maxlength="150" required></label>
+    <label>Instrução profissional (inclui a dose, em texto) <textarea id="f-instrucao" maxlength="500" rows="3" required></textarea></label>
+    <p class="erro" id="erro" role="alert"></p>
+    <button type="submit">Salvar</button>
+    <button type="button" id="btn-cancelar-form">Cancelar</button>
+  </form>
+
+  <p id="vazio" hidden>Nenhum medicamento cadastrado</p>
+  <table id="tabela" hidden>
+    <thead>
+      <tr><th>Nome</th><th>Instrução</th><th>Ações</th></tr>
+    </thead>
+    <tbody id="corpo"></tbody>
+  </table>
+
+  <section id="painel" hidden>
+    <h2 id="painel-titulo"></h2>
+    <form id="form-adm" hidden novalidate>
+      <label>Data e hora <input type="datetime-local" id="a-data" required></label>
+      <label>Observação <textarea id="a-obs" maxlength="500" rows="2"></textarea></label>
+      <p class="erro" id="erro-adm" role="alert"></p>
+      <button type="submit">Registrar</button>
+    </form>
+    <p id="vazio-hist" hidden>Nenhuma administração registrada</p>
+    <table id="tabela-hist" hidden>
+      <thead>
+        <tr><th>Data e hora</th><th>Observação</th><th>Registrado por</th></tr>
+      </thead>
+      <tbody id="corpo-hist"></tbody>
+    </table>
+    <button type="button" id="btn-fechar-painel">Fechar</button>
+  </section>
+  <script src="/js/medicamentos.js"></script>
+</body>
+</html>
