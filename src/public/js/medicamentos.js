@@ -52,6 +52,9 @@
       const tr = document.createElement("tr");
       celula(tr, m.nome);
       celula(tr, m.instrucao_cadastrada || "");
+      celula(tr, m.dose || "");
+      celula(tr, m.frequencia || "");
+      celula(tr, m.horarios || "");
       const acoes = document.createElement("div");
       acoes.appendChild(botao("Histórico", () => abrirPainel(m)));
       if (m.pode_registrar_administracao) acoes.appendChild(botao("Registrar administração", () => abrirPainel(m, true)));
@@ -99,6 +102,9 @@
     $("l-pessoa").hidden = !!m;
     $("f-nome").value = m ? m.nome : "";
     $("f-instrucao").value = m && m.instrucao_cadastrada ? m.instrucao_cadastrada : "";
+    $("f-dose").value = (m && m.dose) || "";
+    $("f-frequencia").value = (m && m.frequencia) || "";
+    $("f-horarios").value = (m && m.horarios) || "";
     if (!m) {
       const lista = await api("/api/pessoas");
       const pessoas = lista.status === 200 ? lista.body.pessoas : [];
@@ -123,7 +129,7 @@
   async function salvar(ev) {
     ev.preventDefault();
     limparMensagens();
-    const dados = { nome: $("f-nome").value, instrucao_cadastrada: $("f-instrucao").value };
+    const dados = { nome: $("f-nome").value, instrucao_cadastrada: $("f-instrucao").value, dose: $("f-dose").value, frequencia: $("f-frequencia").value, horarios: $("f-horarios").value };
     let res;
     if (editando) {
       res = await api(`/api/medicamentos/${editando.id_medicamento}`, { method: "PUT", body: JSON.stringify(dados) });

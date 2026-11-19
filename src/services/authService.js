@@ -31,4 +31,28 @@ async function login(db, emailBruto, senhaBruta) {
   return { status: 200, body: { user: sessionUser }, sessionUser };
 }
 
-module.exports = { login, MAX_FALHAS, BLOQUEIO_MINUTOS };
+const PERFIS_CADASTRO = ["ADMIN", "PESSOA_ASSISTIDA", "COLABORADOR"];
+
+async function cadastrar(db, { nome: nomeBruto, email: emailBruto, senha: senhaBruta, perfil: perfilBruto }) {
+  const perfil = String(perfilBruto || "COLABORADOR");
+  if (!PERFIS_CADASTRO.includes(perfil)) return { status: 400, body: { error: "Perfil inválido." } };
+  const nome = String(nomeBruto || "").trim();
+  const email = String(emailBruto || "").trim().toLowerCase();
+  const senha = String(senhaBruta || "");
+  if (!nome || !email || !senha) return { status: 400, body: { error: "Informe nome, e-mail e senha." } };
+  if (nome.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { status: 400, body: { error: "Dados inválidos." } };
+  if (senha.length < 8) return { status: 400, body: { error: "A senha deve ter ao menos 8 caracteres." } };
+  if (await usuarioRepository.emailExiste(db, email)) return { status: 409, body: { error: "E-mail já cadastrado." } };
+
+  if (perfil === "ADMIN" && (await usuarioRepository.existeAdmin(db))) {
+    return { status: 403, body: { error: "Já existe um administrador. Peça a ele para criar seu acesso como administrador." } };
+  }
+
+  const senhaHash = await bcrypt.hash(senha, 10);
+  const id = await usuarioRepository.inserir(db, { nome, email, senhaHash, perfil });
+  // Sem vínculo automático: o administrador vincula o usuário à pessoa assistida.
+  const sessionUser = { id, nome, email, perfil };
+  return { status: 201, body: { user: sessionUser }, sessionUser };
+}
+
+module.exports = { login, cadastrar, MAX_FALHAS, BLOQUEIO_MINUTOS };

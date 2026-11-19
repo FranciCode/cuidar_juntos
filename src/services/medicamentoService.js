@@ -28,7 +28,13 @@ function validarMedicamento(dados) {
   const instrucao = String((dados && dados.instrucao_cadastrada) || "").trim();
   if (!instrucao) return { erro: "Informe a instrução profissional." };
   if (instrucao.length > 500) return { erro: "A instrução deve ter no máximo 500 caracteres." };
-  return { nome, instrucao };
+  const extras = {};
+  for (const [campo, rotulo, max] of [["dose", "A dose", 100], ["frequencia", "A frequência", 100], ["horarios", "Os horários", 200]]) {
+    const v = String((dados && dados[campo]) || "").trim();
+    if (v.length > max) return { erro: `${rotulo} deve ter no máximo ${max} caracteres.` };
+    extras[campo] = v || null;
+  }
+  return { nome, instrucao, extras };
 }
 
 function validarAdministracao(dados, agora = new Date()) {
@@ -79,7 +85,7 @@ async function criar(db, usuario, dados) {
 
   return executar(db, async (conn) => {
     if (!(await medicamentoRepository.buscarVinculo(conn, idPessoa, usuario.id))) falha(403, "Acesso negado.");
-    const id = await medicamentoRepository.inserir(conn, idPessoa, valido.nome, valido.instrucao);
+    const id = await medicamentoRepository.inserir(conn, idPessoa, valido.nome, valido.instrucao, valido.extras);
     await historicoRepository.registrarEntidade(conn, usuario.id, "MEDICAMENTO_CRIADO", ENTIDADE_MEDICAMENTO, id);
     const medicamento = await medicamentoRepository.buscarDetalhe(conn, id);
     return { status: 201, body: { medicamento } };
@@ -100,7 +106,7 @@ async function editar(db, usuario, id, dados) {
     await carregar(conn, usuario, id);
     const valido = validarMedicamento(dados);
     if (valido.erro) falha(400, valido.erro);
-    await medicamentoRepository.atualizar(conn, id, valido.nome, valido.instrucao);
+    await medicamentoRepository.atualizar(conn, id, valido.nome, valido.instrucao, valido.extras);
     await historicoRepository.registrarEntidade(conn, usuario.id, "MEDICAMENTO_ALTERADO", ENTIDADE_MEDICAMENTO, id);
     const medicamento = await medicamentoRepository.buscarDetalhe(conn, id);
     return { status: 200, body: { medicamento } };

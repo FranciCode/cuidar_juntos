@@ -1,4 +1,4 @@
-const COLUNAS = "m.id_medicamento, m.id_pessoa, m.nome, m.instrucao_cadastrada";
+const COLUNAS = "m.id_medicamento, m.id_pessoa, m.nome, m.instrucao_cadastrada, m.dose, m.frequencia, m.horarios";
 
 async function listar(db, idUsuario, idPessoa) {
   const params = [idUsuario];
@@ -30,16 +30,19 @@ async function buscarDetalhe(db, id) {
   return rows[0] || null;
 }
 
-async function inserir(db, idPessoa, nome, instrucao) {
+async function inserir(db, idPessoa, nome, instrucao, extras = {}) {
   const [res] = await db.execute(
-    "INSERT INTO MEDICAMENTO (id_pessoa, nome, instrucao_cadastrada) VALUES (?, ?, ?)",
-    [idPessoa, nome, instrucao]
+    "INSERT INTO MEDICAMENTO (id_pessoa, nome, instrucao_cadastrada, dose, frequencia, horarios) VALUES (?, ?, ?, ?, ?, ?)",
+    [idPessoa, nome, instrucao, extras.dose ?? null, extras.frequencia ?? null, extras.horarios ?? null]
   );
   return res.insertId;
 }
 
-async function atualizar(db, id, nome, instrucao) {
-  await db.execute("UPDATE MEDICAMENTO SET nome = ?, instrucao_cadastrada = ? WHERE id_medicamento = ?", [nome, instrucao, id]);
+async function atualizar(db, id, nome, instrucao, extras = {}) {
+  await db.execute(
+    "UPDATE MEDICAMENTO SET nome = ?, instrucao_cadastrada = ?, dose = ?, frequencia = ?, horarios = ? WHERE id_medicamento = ?",
+    [nome, instrucao, extras.dose ?? null, extras.frequencia ?? null, extras.horarios ?? null, id]
+  );
 }
 
 async function excluir(db, id) {

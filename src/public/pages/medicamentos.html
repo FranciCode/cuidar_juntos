@@ -25,7 +25,10 @@
     <h2 id="form-titulo"></h2>
     <label id="l-pessoa">Pessoa assistida <select id="f-pessoa"></select></label>
     <label>Nome <input type="text" id="f-nome" maxlength="150" required></label>
-    <label>Instrução profissional (inclui a dose, em texto) <textarea id="f-instrucao" maxlength="500" rows="3" required></textarea></label>
+    <label>Instrução profissional <textarea id="f-instrucao" maxlength="500" rows="3" required></textarea></label>
+    <label>Dose (conforme prescrição) <input type="text" id="f-dose" maxlength="100"></label>
+    <label>Frequência <input type="text" id="f-frequencia" maxlength="100"></label>
+    <label>Horários <input type="text" id="f-horarios" maxlength="200"></label>
     <p class="erro" id="erro" role="alert"></p>
     <button type="submit">Salvar</button>
     <button type="button" id="btn-cancelar-form">Cancelar</button>
@@ -34,7 +37,7 @@
   <p id="vazio" hidden>Nenhum medicamento cadastrado</p>
   <table id="tabela" hidden>
     <thead>
-      <tr><th>Nome</th><th>Instrução</th><th>Ações</th></tr>
+      <tr><th>Nome</th><th>Instrução</th><th>Dose</th><th>Frequência</th><th>Horários</th><th>Ações</th></tr>
     </thead>
     <tbody id="corpo"></tbody>
   </table>

@@ -26,8 +26,19 @@
         <input class="form-control mb-3" id="senha" type="password" autocomplete="current-password" required>
         <button class="btn btn-primary w-100" type="submit">Entrar</button>
       </form>
+      <form id="registerForm" class="mt-4 d-none">
+        <label class="form-label" for="regNome">Nome</label>
+        <input class="form-control mb-3" id="regNome" maxlength="120" autocomplete="name" required>
+        <label class="form-label" for="regEmail">E-mail</label>
+        <input class="form-control mb-3" id="regEmail" type="email" autocomplete="username" required>
+        <label class="form-label" for="regSenha">Senha (mínimo 8 caracteres)</label>
+        <input class="form-control mb-3" id="regSenha" type="password" minlength="8" autocomplete="new-password" required>
+        <label class="form-label" for="regPerfil">Perfil</label>
+        <select class="form-select mb-3" id="regPerfil"><option value="COLABORADOR">Colaborador</option><option value="PESSOA_ASSISTIDA">Pessoa assistida</option><option value="ADMIN">Administrador</option></select>
+        <button class="btn btn-primary w-100" type="submit">Criar conta</button>
+      </form>
       <div id="loginMessage" class="alert d-none mt-3 mb-0" role="alert"></div>
-      <p class="small text-secondary mt-3 mb-0">Acesso disponível para usuários previamente cadastrados.</p>
+      <p class="small text-secondary mt-3 mb-0"><span id="toggleText">Ainda não tem conta?</span> <a href="#" id="toggleAuth">Criar conta</a></p>
     </section>
 
     <section id="appPanel" class="d-none">

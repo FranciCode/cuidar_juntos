@@ -24,7 +24,7 @@ function setSignedIn(user) {
   currentUser = user;
   $("loginPanel").classList.toggle("d-none", !!user);
   $("appPanel").classList.toggle("d-none", !user);
-  $("headerUser").textContent = user ? `${user.nome} · ${user.perfil === "ADMIN" ? "Administrador familiar" : "Colaborador"}` : "";
+  $("headerUser").textContent = user ? `${user.nome} · ${({ ADMIN: "Administrador familiar", PESSOA_ASSISTIDA: "Pessoa assistida" })[user.perfil] || "Colaborador"}` : "";
   $("createCard").classList.toggle("d-none", !user || user.perfil !== "ADMIN");
 }
 function formatDate(value) {
@@ -86,6 +86,27 @@ $("loginForm").addEventListener("submit", async (event) => {
   hideMessage($("loginMessage"));
   try {
     const data = await api("/api/login", { method: "POST", body: JSON.stringify({ email: $("email").value, senha: $("senha").value }) });
+    setSignedIn(data.user);
+    if (data.user.perfil === "ADMIN") await loadPeople();
+    await refresh();
+  } catch (error) {
+    showMessage($("loginMessage"), error.message);
+  }
+});
+$("toggleAuth").addEventListener("click", (event) => {
+  event.preventDefault();
+  const registering = $("registerForm").classList.toggle("d-none") === false;
+  $("loginForm").classList.toggle("d-none", registering);
+  $("toggleText").textContent = registering ? "Já tem conta?" : "Ainda não tem conta?";
+  $("toggleAuth").textContent = registering ? "Entrar" : "Criar conta";
+  hideMessage($("loginMessage"));
+});
+$("registerForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  hideMessage($("loginMessage"));
+  try {
+    const data = await api("/api/login/cadastro", { method: "POST", body: JSON.stringify({ nome: $("regNome").value, email: $("regEmail").value, senha: $("regSenha").value, perfil: $("regPerfil").value }) });
+    $("registerForm").reset();
     setSignedIn(data.user);
     if (data.user.perfil === "ADMIN") await loadPeople();
     await refresh();

@@ -3,7 +3,7 @@ const usuarioRepository = require("../repositories/usuarioRepository");
 const historicoRepository = require("../repositories/historicoRepository");
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PERFIS = ["ADMIN", "COLABORADOR"];
+const PERFIS = ["ADMIN", "PESSOA_ASSISTIDA", "COLABORADOR"];
 
 class HttpError extends Error {
   constructor(status, message) {

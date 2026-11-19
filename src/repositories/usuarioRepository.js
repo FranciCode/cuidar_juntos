@@ -53,6 +53,11 @@ async function contarAdminsAtivosParaAtualizar(db) {
   return rows.length;
 }
 
+async function existeAdmin(db) {
+  const [rows] = await db.execute("SELECT id_usuario FROM USUARIO WHERE perfil = 'ADMIN' LIMIT 1", []);
+  return !!rows[0];
+}
+
 async function pessoaUnica(db) {
   const [rows] = await db.execute("SELECT id_pessoa FROM PESSOA_ASSISTIDA ORDER BY id_pessoa LIMIT 1", []);
   return rows[0] ? rows[0].id_pessoa : null;
@@ -85,4 +90,4 @@ async function atualizarStatus(db, id, status) {
   await db.execute("UPDATE USUARIO SET status = ? WHERE id_usuario = ?", [status, id]);
 }
 
-module.exports = { buscarPorEmail, registrarFalha, zerarFalhas, listar, buscarPorId, buscarPorIdParaAtualizar, emailExiste, contarAdminsAtivosParaAtualizar, pessoaUnica, inserir, vincularPessoa, atualizar, atualizarPermissao, atualizarStatus };
+module.exports = { buscarPorEmail, registrarFalha, zerarFalhas, listar, buscarPorId, buscarPorIdParaAtualizar, emailExiste, contarAdminsAtivosParaAtualizar, existeAdmin, pessoaUnica, inserir, vincularPessoa, atualizar, atualizarPermissao, atualizarStatus };
