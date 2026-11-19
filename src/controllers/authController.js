@@ -14,4 +14,17 @@ function login(getPool) {
   };
 }
 
-module.exports = { login };
+function cadastrar(getPool) {
+  return async (req, res) => {
+    try {
+      const db = await getPool();
+      const result = await authService.cadastrar(db, req.body || {});
+      if (result.sessionUser) req.session.user = result.sessionUser;
+      res.status(result.status).json(result.body);
+    } catch (_error) {
+      res.status(500).json({ error: "Não foi possível criar a conta." });
+    }
+  };
+}
+
+module.exports = { login, cadastrar };
