@@ -33,8 +33,8 @@
         <input class="form-control mb-3" id="regEmail" type="email" autocomplete="username" required>
         <label class="form-label" for="regSenha">Senha (mínimo 8 caracteres)</label>
         <input class="form-control mb-3" id="regSenha" type="password" minlength="8" autocomplete="new-password" required>
-        <label class="form-label" for="regPerfil">Perfil</label>
-        <select class="form-select mb-3" id="regPerfil"><option value="COLABORADOR">Colaborador</option><option value="PESSOA_ASSISTIDA">Pessoa assistida</option><option value="ADMIN">Administrador</option></select>
+        <label class="form-label" for="regConvite">Código do convite (deixe em branco apenas no primeiro acesso)</label>
+        <input class="form-control mb-3" id="regConvite" maxlength="128" autocomplete="off">
         <button class="btn btn-primary w-100" type="submit">Criar conta</button>
       </form>
       <div id="loginMessage" class="alert d-none mt-3 mb-0" role="alert"></div>

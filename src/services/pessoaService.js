@@ -46,7 +46,7 @@ async function criar(db, usuario, dados) {
     for (const u of usuarios) {
       await pessoaRepository.vincular(conn, u.id_usuario, idPessoa, u.perfil === "ADMIN");
     }
-    await historicoRepository.registrar(conn, usuario.id, "PESSOA_CRIADA", ENTIDADE, idPessoa);
+    await historicoRepository.registrarEntidade(conn, usuario.id, "PESSOA_CRIADA", ENTIDADE, idPessoa);
     return pessoaRepository.buscarDoUsuario(conn, idPessoa, usuario.id);
   });
   return { status: 201, body: { pessoa } };
@@ -58,7 +58,7 @@ async function editar(db, usuario, idPessoa, dados) {
 
   const pessoa = await withTransaction(db, async (conn) => {
     await pessoaRepository.atualizar(conn, idPessoa, usuario.id, valido.nome, valido.nascimento);
-    await historicoRepository.registrar(conn, usuario.id, "PESSOA_ALTERADA", ENTIDADE, idPessoa);
+    await historicoRepository.registrarEntidade(conn, usuario.id, "PESSOA_ALTERADA", ENTIDADE, idPessoa);
     return pessoaRepository.buscarDoUsuario(conn, idPessoa, usuario.id);
   });
   return { status: 200, body: { pessoa } };
@@ -83,7 +83,7 @@ async function alterarStatus(db, usuario, idPessoa, dados) {
 
     await pessoaRepository.atualizarStatus(conn, idPessoa, usuario.id, status);
     const acao = status === "INATIVO" ? "PESSOA_DESATIVADA" : "PESSOA_REATIVADA";
-    await historicoRepository.registrar(conn, usuario.id, acao, ENTIDADE, idPessoa);
+    await historicoRepository.registrarEntidade(conn, usuario.id, acao, ENTIDADE, idPessoa);
     const pessoa = await pessoaRepository.buscarDoUsuario(conn, idPessoa, usuario.id);
     return { status: 200, body: { pessoa } };
   });

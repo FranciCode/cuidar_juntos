@@ -105,7 +105,7 @@ $("registerForm").addEventListener("submit", async (event) => {
   event.preventDefault();
   hideMessage($("loginMessage"));
   try {
-    const data = await api("/api/login/cadastro", { method: "POST", body: JSON.stringify({ nome: $("regNome").value, email: $("regEmail").value, senha: $("regSenha").value, perfil: $("regPerfil").value }) });
+    const data = await api("/api/login/cadastro", { method: "POST", body: JSON.stringify({ nome: $("regNome").value, email: $("regEmail").value, senha: $("regSenha").value, convite: $("regConvite").value.trim() }) });
     $("registerForm").reset();
     setSignedIn(data.user);
     if (data.user.perfil === "ADMIN") await loadPeople();

@@ -52,13 +52,13 @@ async function inserir(db, nome, dataNascimento) {
 }
 
 async function listarUsuariosAtivos(db) {
-  const [rows] = await db.execute("SELECT id_usuario, perfil FROM USUARIO WHERE status = 'ATIVO'");
+  const [rows] = await db.execute("SELECT id_usuario, perfil FROM USUARIO WHERE status = 'ATIVO' FOR UPDATE");
   return rows;
 }
 
 async function vincular(db, idUsuario, idPessoa, podeRegistrar) {
   await db.execute(
-    "INSERT INTO USUARIO_PESSOA (id_usuario, id_pessoa, pode_registrar_administracao) VALUES (?, ?, ?)",
+    "INSERT INTO USUARIO_PESSOA (id_usuario, id_pessoa, pode_registrar_administracao) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE id_usuario = id_usuario",
     [idUsuario, idPessoa, podeRegistrar ? 1 : 0]
   );
 }

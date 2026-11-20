@@ -44,8 +44,14 @@ async function criar(pool, autor, dados) {
     return await transacao(pool, async (conn) => {
       if (await usuarioRepository.emailExiste(conn, email)) throw new HttpError(409, "E-mail já cadastrado.");
       const id = await usuarioRepository.inserir(conn, { nome, email, senhaHash, perfil });
-      const idPessoa = await usuarioRepository.pessoaUnica(conn);
-      if (idPessoa) await usuarioRepository.vincularPessoa(conn, id, idPessoa, perfil === "ADMIN");
+      let pessoas = await usuarioRepository.pessoasDoUsuario(conn, autor.id);
+      if (!pessoas.length) {
+        const unica = await usuarioRepository.pessoaUnica(conn);
+        pessoas = unica ? [unica] : [];
+      }
+      for (const idPessoa of pessoas) {
+        await usuarioRepository.vincularPessoa(conn, id, idPessoa, perfil === "ADMIN");
+      }
       await historicoRepository.registrar(conn, { idUsuario: autor.id, acao: "USUARIO_CRIADO", idRegistro: id, detalhes: `Usuário ${email} criado` });
       return usuarioRepository.buscarPorId(conn, id);
     });

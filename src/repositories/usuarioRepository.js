@@ -63,6 +63,11 @@ async function pessoaUnica(db) {
   return rows[0] ? rows[0].id_pessoa : null;
 }
 
+async function pessoasDoUsuario(db, idUsuario) {
+  const [rows] = await db.execute("SELECT id_pessoa FROM USUARIO_PESSOA WHERE id_usuario = ? ORDER BY id_pessoa", [idUsuario]);
+  return rows.map((r) => r.id_pessoa);
+}
+
 async function inserir(db, { nome, email, senhaHash, perfil }) {
   const [r] = await db.execute(
     "INSERT INTO USUARIO (nome, email, senha_hash, perfil, status) VALUES (?, ?, ?, ?, 'ATIVO')",
@@ -73,7 +78,7 @@ async function inserir(db, { nome, email, senhaHash, perfil }) {
 
 async function vincularPessoa(db, idUsuario, idPessoa, pode) {
   await db.execute(
-    "INSERT INTO USUARIO_PESSOA (id_usuario, id_pessoa, pode_registrar_administracao) VALUES (?, ?, ?)",
+    "INSERT INTO USUARIO_PESSOA (id_usuario, id_pessoa, pode_registrar_administracao) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE id_usuario = id_usuario",
     [idUsuario, idPessoa, pode ? 1 : 0]
   );
 }
@@ -90,4 +95,4 @@ async function atualizarStatus(db, id, status) {
   await db.execute("UPDATE USUARIO SET status = ? WHERE id_usuario = ?", [status, id]);
 }
 
-module.exports = { buscarPorEmail, registrarFalha, zerarFalhas, listar, buscarPorId, buscarPorIdParaAtualizar, emailExiste, contarAdminsAtivosParaAtualizar, existeAdmin, pessoaUnica, inserir, vincularPessoa, atualizar, atualizarPermissao, atualizarStatus };
+module.exports = { buscarPorEmail, registrarFalha, zerarFalhas, listar, buscarPorId, buscarPorIdParaAtualizar, emailExiste, contarAdminsAtivosParaAtualizar, existeAdmin, pessoaUnica, pessoasDoUsuario, inserir, vincularPessoa, atualizar, atualizarPermissao, atualizarStatus };
