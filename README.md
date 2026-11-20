@@ -54,6 +54,8 @@ node scripts/create-user.js
 
 Informe nome, e-mail, uma senha inicial com pelo menos 12 caracteres e o perfil `ADMIN`. A senha é armazenada como hash bcrypt, não em texto puro.
 
+Se ainda não existir administrador, o primeiro cadastro público na tela recebe o perfil ADMIN automaticamente. Depois disso, novos cadastros exigem um convite. Gere o código com `node scripts/create-invite.js` (o código é exibido uma única vez, só o hash é gravado) e compartilhe-o manualmente. Bancos já criados precisam aplicar `database/migrations/003_convite.sql` uma vez.
+
 Depois, cadastre ao menos uma pessoa assistida diretamente no banco, por exemplo:
 
 ```sql
