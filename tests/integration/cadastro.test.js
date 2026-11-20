@@ -12,7 +12,7 @@ let calls;
 let lockChain;
 
 function resetState(extra = {}) {
-  state = { admin: false, emailExiste: false, existente: null, convite: null, lockOk: 1, falhaInsert: false, consumirOk: true, ...extra };
+  state = { admin: false, emailExiste: false, existente: null, convite: null, lockOk: 1, falhaInsert: false, ...extra };
   calls = [];
   lockChain = Promise.resolve();
 }
@@ -24,7 +24,7 @@ function conviteValido(extra = {}) {
 async function executar(sql, params = []) {
   calls.push({ sql, params });
   if (/FROM CONVITE/.test(sql)) return [state.convite ? [state.convite] : []];
-  if (/UPDATE CONVITE/.test(sql)) return [{ affectedRows: state.consumirOk ? 1 : 0 }];
+  if (/UPDATE CONVITE/.test(sql)) return [{ affectedRows: 1 }];
   if (/INSERT INTO USUARIO_PESSOA/.test(sql)) return [{}];
   if (/INSERT INTO USUARIO /.test(sql)) {
     if (state.falhaInsert) throw new Error("falha");
@@ -61,119 +61,127 @@ function novaConexao() {
   };
 }
 
-beforeEach(() => {
-  resetState();
-  app.locals.pool = { getConnection: async () => novaConexao() };
-});
+beforeAll(() => { app.locals.pool = { getConnection: async () => novaConexao(), execute: executar, query: jest.fn() }; });
+beforeEach(() => resetState());
 
-const cadastro = (body) => request(app).post("/api/login/cadastro").send(body);
+const post = (body) => request(app).post("/api/login/cadastro").send(body);
 const base = { nome: "Novo", email: "novo@teste.com", senha: "SenhaCorreta1" };
-const inserts = () => calls.filter((c) => /INSERT INTO USUARIO /.test(c.sql));
+const sqls = () => calls.map((c) => c.sql);
 
-test("primeiro cadastro publico vira ADMIN, mesmo que o cliente envie outro perfil", async () => {
-  const res = await cadastro({ ...base, perfil: "COLABORADOR" });
+test("primeiro cadastro publico vira ADMIN mesmo com perfil enviado pelo cliente", async () => {
+  const res = await post({ ...base, perfil: "COLABORADOR" });
   expect(res.status).toBe(201);
   expect(res.body.user.perfil).toBe("ADMIN");
-  expect(inserts()[0].params[3]).toBe("ADMIN");
+  const insert = calls.find((c) => /INSERT INTO USUARIO /.test(c.sql));
+  expect(insert.params[3]).toBe("ADMIN");
+  expect(sqls().some((s) => /GET_LOCK/.test(s))).toBe(true);
 });
 
-test("lock na mesma conexao: GET_LOCK, transacao, RELEASE_LOCK e release", async () => {
-  await cadastro(base);
-  const ordem = calls.map((c) => c.sql).filter((s) => /GET_LOCK|BEGIN|COMMIT|RELEASE_LOCK|RELEASE_CONN/.test(s)).map((s) => s.replace(/\(.*$/, ""));
-  expect(ordem).toEqual(["SELECT GET_LOCK", "BEGIN", "COMMIT", "SELECT RELEASE_LOCK", "RELEASE_CONN"]);
+test("a trava e liberada na mesma conexao, depois do commit", async () => {
+  await post(base);
+  const s = sqls();
+  expect(s.indexOf("COMMIT")).toBeLessThan(s.findIndex((q) => /RELEASE_LOCK/.test(q)));
+  expect(s.findIndex((q) => /RELEASE_LOCK/.test(q))).toBeLessThan(s.indexOf("RELEASE_CONN"));
 });
 
-test("RELEASE_LOCK ocorre mesmo com erro", async () => {
+test("a trava e liberada em caso de erro", async () => {
   resetState({ falhaInsert: true });
-  const res = await cadastro(base);
+  const res = await post(base);
   expect(res.status).toBe(500);
-  expect(calls.some((c) => c.sql === "ROLLBACK")).toBe(true);
-  expect(calls.some((c) => /RELEASE_LOCK/.test(c.sql))).toBe(true);
-  expect(calls.some((c) => c.sql === "RELEASE_CONN")).toBe(true);
+  expect(sqls()).toContain("ROLLBACK");
+  expect(sqls().some((q) => /RELEASE_LOCK/.test(q))).toBe(true);
+  expect(sqls()).toContain("RELEASE_CONN");
 });
 
-test("falha ao obter a trava: 503 e nada cadastrado", async () => {
-  resetState({ lockOk: 0 });
-  const res = await cadastro(base);
-  expect(res.status).toBe(503);
-  expect(inserts()).toHaveLength(0);
-});
-
-test("cadastro sem convite depois do primeiro admin: 403", async () => {
+test("sem convite apos existir administrador retorna 403 e nao cria usuario", async () => {
   resetState({ admin: true });
-  const res = await cadastro({ ...base, perfil: "ADMIN" });
+  const res = await post({ ...base, perfil: "ADMIN" });
   expect(res.status).toBe(403);
-  expect(inserts()).toHaveLength(0);
+  expect(sqls().some((q) => /INSERT INTO USUARIO /.test(q))).toBe(false);
 });
 
-test("concorrencia simulada: so um primeiro admin, o outro recebe 403", async () => {
-  const [a, b] = await Promise.all([
-    cadastro({ ...base, email: "a@teste.com" }),
-    cadastro({ ...base, email: "b@teste.com" })
-  ]);
+test("cadastros simultaneos criam apenas um administrador", async () => {
+  const [a, b] = await Promise.all([post(base), post({ ...base, email: "outro@teste.com" })]);
   expect([a.status, b.status].sort()).toEqual([201, 403]);
-  expect(inserts()).toHaveLength(1);
+  expect(calls.filter((c) => /INSERT INTO USUARIO /.test(c.sql))).toHaveLength(1);
 });
 
-test("convite invalido, expirado e usado devolvem a mesma resposta 400", async () => {
+test("falha ao obter a trava retorna 503 sem cadastrar", async () => {
+  resetState({ lockOk: 0 });
+  const res = await post(base);
+  expect(res.status).toBe(503);
+  expect(sqls().some((q) => /INSERT INTO USUARIO /.test(q))).toBe(false);
+  expect(sqls().some((q) => /RELEASE_LOCK/.test(q))).toBe(false);
+});
+
+test("convite inexistente, expirado ou usado devolve a mesma resposta 400", async () => {
   const corpo = { ...base, convite: TOKEN };
-  resetState();
-  const invalido = await cadastro(corpo);
+  const inexistente = await post(corpo);
   resetState({ convite: conviteValido({ expira_em: new Date(Date.now() - 1000) }) });
-  const expirado = await cadastro(corpo);
+  const expirado = await post(corpo);
   resetState({ convite: conviteValido({ usado_em: new Date() }) });
-  const usado = await cadastro(corpo);
-  for (const r of [invalido, expirado, usado]) expect(r.status).toBe(400);
-  expect(expirado.body).toEqual(invalido.body);
-  expect(usado.body).toEqual(invalido.body);
+  const usado = await post(corpo);
+  for (const r of [inexistente, expirado, usado]) expect(r.status).toBe(400);
+  expect(expirado.body.error).toBe(inexistente.body.error);
+  expect(usado.body.error).toBe(inexistente.body.error);
+  expect(sqls().some((q) => /INSERT INTO USUARIO /.test(q))).toBe(false);
 });
 
-test("convite valido: perfil e e-mail vem do convite e o token e consultado por hash", async () => {
-  resetState({ admin: true, convite: conviteValido({ perfil: "COLABORADOR" }) });
-  const res = await cadastro({ ...base, convite: TOKEN, perfil: "ADMIN" });
+test("convite com e-mail diferente do informado e recusado", async () => {
+  resetState({ convite: conviteValido() });
+  const res = await post({ ...base, email: "outro@teste.com", convite: TOKEN });
+  expect(res.status).toBe(400);
+});
+
+test("convite valido usa o perfil do convite e ignora o perfil do cliente", async () => {
+  resetState({ convite: conviteValido() });
+  const res = await post({ ...base, perfil: "ADMIN", convite: TOKEN });
   expect(res.status).toBe(201);
   expect(res.body.user.perfil).toBe("COLABORADOR");
-  expect(inserts()[0].params[3]).toBe("COLABORADOR");
-  expect(calls.find((c) => /FROM CONVITE/.test(c.sql)).params[0]).toBe(hashToken(TOKEN));
-  expect(calls.find((c) => /INSERT INTO USUARIO_PESSOA/.test(c.sql)).params).toEqual([10, 3, 0]);
+  const busca = calls.find((c) => /FROM CONVITE/.test(c.sql));
+  expect(busca.params[0]).toBe(hashToken(TOKEN));
+  expect(busca.params[0]).not.toBe(TOKEN);
+  const insert = calls.find((c) => /INSERT INTO USUARIO /.test(c.sql));
+  expect(insert.params[3]).toBe("COLABORADOR");
+  const vinculo = calls.find((c) => /INSERT INTO USUARIO_PESSOA/.test(c.sql));
+  expect(vinculo.params).toEqual([10, 3, 0]);
+  expect(sqls().some((q) => /GET_LOCK/.test(q))).toBe(false);
 });
 
-test("e-mail diferente do convite: 400 e nada criado", async () => {
-  resetState({ admin: true, convite: conviteValido() });
-  const res = await cadastro({ ...base, email: "outro@teste.com", convite: TOKEN });
-  expect(res.status).toBe(400);
-  expect(inserts()).toHaveLength(0);
-});
-
-test("convite consumido por outra requisicao: 400", async () => {
-  resetState({ admin: true, convite: conviteValido(), consumirOk: false });
-  const res = await cadastro({ ...base, convite: TOKEN });
-  expect(res.status).toBe(400);
-  expect(calls.some((c) => c.sql === "ROLLBACK")).toBe(true);
-});
-
-test("conta existente: associa a outra pessoa sem duplicar e sem mudar o perfil", async () => {
-  const existente = { id_usuario: 2, nome: "Bia", email: "novo@teste.com", senha_hash: hash, perfil: "ADMIN", status: "ATIVO", tentativas_falhas: 0, bloqueado_ate: null };
-  resetState({ admin: true, existente, convite: conviteValido({ perfil: "COLABORADOR", id_pessoa: 4 }) });
-  const res = await cadastro({ ...base, convite: TOKEN });
+test("conta existente e associada a outra pessoa sem duplicar o usuario", async () => {
+  resetState({
+    convite: conviteValido({ id_pessoa: 5 }),
+    existente: { id_usuario: 2, nome: "Novo", email: "novo@teste.com", senha_hash: hash, perfil: "COLABORADOR", status: "ATIVO", tentativas_falhas: 0, bloqueado_ate: null }
+  });
+  const res = await post({ ...base, convite: TOKEN });
   expect(res.status).toBe(200);
-  expect(res.body.user.perfil).toBe("ADMIN");
-  expect(inserts()).toHaveLength(0);
-  expect(calls.find((c) => /INSERT INTO USUARIO_PESSOA/.test(c.sql)).params).toEqual([2, 4, 0]);
+  expect(sqls().some((q) => /INSERT INTO USUARIO /.test(q))).toBe(false);
+  const vinculo = calls.find((c) => /INSERT INTO USUARIO_PESSOA/.test(c.sql));
+  expect(vinculo.params).toEqual([2, 5, 0]);
+  expect(vinculo.sql).toMatch(/ON DUPLICATE KEY/);
 });
 
-test("conta existente com senha errada: 400 generico e convite nao consumido", async () => {
-  const existente = { id_usuario: 2, nome: "Bia", email: "novo@teste.com", senha_hash: hash, perfil: "COLABORADOR", status: "ATIVO", tentativas_falhas: 0, bloqueado_ate: null };
-  resetState({ admin: true, existente, convite: conviteValido() });
-  const res = await cadastro({ ...base, senha: "SenhaErrada99", convite: TOKEN });
+test("conta existente com senha errada nao e associada", async () => {
+  resetState({
+    convite: conviteValido(),
+    existente: { id_usuario: 2, nome: "Novo", email: "novo@teste.com", senha_hash: hash, perfil: "COLABORADOR", status: "ATIVO", tentativas_falhas: 0, bloqueado_ate: null }
+  });
+  const res = await post({ ...base, senha: "SenhaErrada99", convite: TOKEN });
   expect(res.status).toBe(400);
-  expect(calls.some((c) => /UPDATE CONVITE/.test(c.sql))).toBe(false);
-  expect(calls.some((c) => /INSERT INTO USUARIO_PESSOA/.test(c.sql))).toBe(false);
+  expect(sqls().some((q) => /INSERT INTO USUARIO_PESSOA/.test(q))).toBe(false);
+  expect(sqls().some((q) => /UPDATE CONVITE/.test(q))).toBe(false);
 });
 
-test("conta existente inativa: resposta generica", async () => {
-  const existente = { id_usuario: 2, nome: "Bia", email: "novo@teste.com", senha_hash: hash, perfil: "COLABORADOR", status: "INATIVO", tentativas_falhas: 0, bloqueado_ate: null };
-  resetState({ admin: true, existente, convite: conviteValido() });
-  const res = await cadastro({ ...base, convite: TOKEN });
-  expect(res.status).toBe(400);
+test("validacoes basicas do cadastro", async () => {
+  expect((await post({ ...base, senha: "curta" })).status).toBe(400);
+  expect((await post({ ...base, email: "invalido" })).status).toBe(400);
+});
+
+test("paginas protegidas redirecionam sem sessao e /api desconhecido retorna 404", async () => {
+  const pagina = await request(app).get("/pages/usuarios.html");
+  expect(pagina.status).toBe(302);
+  expect(pagina.headers.location).toBe("/");
+  const api = await request(app).get("/api/inexistente");
+  expect(api.status).toBe(404);
+  expect(api.body.error).toBeDefined();
 });

@@ -65,6 +65,12 @@ VALUES ('Pessoa de demonstração', TRUE);
 
 Use somente dados fictícios nos testes e na demonstração acadêmica.
 
+### Primeiro acesso e convites
+
+- Enquanto não existir administrador, o primeiro cadastro público pela tela inicial recebe automaticamente o perfil `ADMIN`. O perfil nunca é escolhido pelo cliente.
+- Depois disso, novos cadastros exigem um convite válido. Gere-o no servidor com `node scripts/create-invite.js` (e-mail, perfil, validade de até 7 dias e, opcionalmente, o id da pessoa assistida). O código é exibido uma única vez e só o hash fica no banco; compartilhe-o manualmente.
+- Bancos já criados precisam aplicar uma vez `database/migrations/003_convite.sql`. A migration não é executada automaticamente.
+
 ## 6. Verificação
 
 - `http://localhost:3000/api/health` deve informar que a aplicação está ativa e que o banco está conectado.

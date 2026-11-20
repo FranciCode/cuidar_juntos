@@ -6,12 +6,12 @@ async function buscarPorHashParaAtualizar(db, tokenHash) {
   return rows[0] || null;
 }
 
-async function consumir(db, idConvite, idUsuario, agora) {
+async function consumir(db, idConvite, idUsuario, agora = new Date()) {
   const [r] = await db.execute(
     "UPDATE CONVITE SET usado_em = ?, usado_por = ? WHERE id_convite = ? AND usado_em IS NULL AND expira_em > ?",
     [agora, idUsuario, idConvite, agora]
   );
-  return !!r && r.affectedRows === 1;
+  return r.affectedRows === 1;
 }
 
 async function inserir(db, { tokenHash, email, perfil, idPessoa, expiraEm, criadoPor }) {
