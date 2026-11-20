@@ -5,7 +5,6 @@ const session = require("express-session");
 const helmet = require("helmet");
 const path = require("path");
 const mysql = require("mysql2/promise");
-const loginLimiter = require("./middlewares/loginLimiter");
 
 const app = express();
 
@@ -24,6 +23,13 @@ app.use(session({
     maxAge: 1000 * 60 * 60 * 4
   }
 }));
+app.use((req, res, next) => {
+  const p = req.path.toLowerCase();
+  if (p.startsWith("/pages/") && p !== "/pages/index.html" && !(req.session && req.session.user)) {
+    return res.redirect("/");
+  }
+  next();
+});
 app.use(express.static(path.join(__dirname, "public")));
 
 let pool;
@@ -67,7 +73,7 @@ app.get("/api/health", async (_req, res) => {
   }
 });
 
-app.use("/api/login", loginLimiter, require("./routes/auth")(getPool));
+app.use("/api/login", require("./routes/auth")(getPool));
 app.use("/api/usuarios", require("./routes/usuarios")(getPool, requireAuth, requireAdmin));
 
 app.use("/api/atividades", require("./routes/atividades")(getPool));
@@ -86,6 +92,8 @@ app.get("/api/me", (req, res) => {
   if (!req.session.user) return res.status(401).json({ error: "NÃ£o autenticado." });
   res.json({ user: req.session.user });
 });
+
+app.use("/api", (_req, res) => res.status(404).json({ error: "Recurso não encontrado." }));
 
 app.get("*", (_req, res) => res.sendFile(path.join(__dirname, "public", "pages", "index.html")));
 
