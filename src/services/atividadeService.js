@@ -1,4 +1,4 @@
-const { withTransaction } = require("../db");
+﻿const { withTransaction } = require("../db");
 const atividadeRepository = require("../repositories/atividadeRepository");
 const pessoaRepository = require("../repositories/pessoaRepository");
 const usuarioRepository = require("../repositories/usuarioRepository");
@@ -70,7 +70,7 @@ async function criar(db, usuario, dados) {
   return executar(db, async (conn) => {
     if (!(await pessoaRepository.temVinculo(conn, idPessoa, usuario.id))) falha(403, "Acesso negado.");
     const id = await atividadeRepository.inserir(conn, idPessoa, valido.titulo, valido.descricao, valido.dataHora, usuario.id);
-    await historicoRepository.registrar(conn, usuario.id, "ATIVIDADE_CRIADA", ENTIDADE, id);
+    await historicoRepository.registrarEntidade(conn, usuario.id, "ATIVIDADE_CRIADA", ENTIDADE, id);
     const atividade = await atividadeRepository.buscarDetalhe(conn, id);
     return { status: 201, body: { atividade } };
   });
@@ -104,7 +104,7 @@ async function editar(db, usuario, id, dados) {
     const resp = atual.status === "ASSUMIDA" ? await atividadeRepository.responsavelAtivo(conn, id) : null;
     const { aviso, detalhes } = avisoPara(resp, usuario);
     await atividadeRepository.atualizarDados(conn, id, valido.titulo, valido.descricao, valido.dataHora);
-    await historicoRepository.registrar(conn, usuario.id, "ATIVIDADE_ALTERADA", ENTIDADE, id, detalhes);
+    await historicoRepository.registrarEntidade(conn, usuario.id, "ATIVIDADE_ALTERADA", ENTIDADE, id, detalhes);
     const atividade = await atividadeRepository.buscarDetalhe(conn, id);
     const body = { atividade };
     if (aviso) body.aviso = aviso;
@@ -124,7 +124,7 @@ async function cancelar(db, usuario, id) {
       falha(409, "A atividade foi alterada por outra pessoa.");
     }
     await atividadeRepository.liberarResponsabilidade(conn, id);
-    await historicoRepository.registrar(conn, usuario.id, "ATIVIDADE_CANCELADA", ENTIDADE, id, detalhes);
+    await historicoRepository.registrarEntidade(conn, usuario.id, "ATIVIDADE_CANCELADA", ENTIDADE, id, detalhes);
     const atividade = await atividadeRepository.buscarDetalhe(conn, id);
     const body = { atividade };
     if (aviso) body.aviso = aviso;
@@ -142,7 +142,7 @@ async function assumir(db, usuario, id) {
     }
     if ((await atividadeRepository.mudarStatus(conn, id, "PENDENTE", "ASSUMIDA")) === 0) falha(409, MSG_JA_ASSUMIDA);
     await atividadeRepository.inserirResponsabilidade(conn, id, usuario.id);
-    await historicoRepository.registrar(conn, usuario.id, "ATIVIDADE_ASSUMIDA", ENTIDADE, id);
+    await historicoRepository.registrarEntidade(conn, usuario.id, "ATIVIDADE_ASSUMIDA", ENTIDADE, id);
     const atividade = await atividadeRepository.buscarDetalhe(conn, id);
     return { status: 200, body: { atividade } };
   });
@@ -165,7 +165,7 @@ async function finalizar(db, usuario, id, acao) {
     else await atividadeRepository.concluirResponsabilidade(conn, id);
     const nome = acao === "liberar" ? "ATIVIDADE_LIBERADA" : "ATIVIDADE_CONCLUIDA";
     const detalhes = acao === "concluir" ? `concluída por usuário ${usuario.id}` : null;
-    await historicoRepository.registrar(conn, usuario.id, nome, ENTIDADE, id, detalhes);
+    await historicoRepository.registrarEntidade(conn, usuario.id, nome, ENTIDADE, id, detalhes);
     const atividade = await atividadeRepository.buscarDetalhe(conn, id);
     return { status: 200, body: { atividade } };
   });

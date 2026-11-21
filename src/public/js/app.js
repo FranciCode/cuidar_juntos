@@ -25,16 +25,12 @@ function setSignedIn(user) {
   $("loginPanel").classList.toggle("d-none", !!user);
   $("appPanel").classList.toggle("d-none", !user);
   $("headerUser").textContent = user ? `${user.nome} · ${({ ADMIN: "Administrador familiar", PESSOA_ASSISTIDA: "Pessoa assistida" })[user.perfil] || "Colaborador"}` : "";
-  $("createCard").classList.toggle("d-none", !user || user.perfil !== "ADMIN");
+  document.querySelectorAll("#mainNav [data-roles]").forEach(a => a.classList.toggle("d-none", !user || !a.dataset.roles.split(",").includes(user.perfil)));
 }
 function formatDate(value) {
   if (!value) return "Sem data definida";
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleString("pt-BR");
-}
-async function loadPeople() {
-  const data = await api("/api/pessoas");
-  $("person").innerHTML = data.pessoas.map(p => `<option value="${p.id_pessoa}">${escapeHtml(p.nome)}</option>`).join("");
 }
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch]));
@@ -67,15 +63,17 @@ async function loadActivities() {
     </article>`;
   }).join("") : '<p class="text-secondary mb-0">Nenhuma atividade cadastrada.</p>';
 }
-async function loadHistory() {
-  const data = await api("/api/historico");
-  $("historyList").innerHTML = data.registros.length ? data.registros.map(h =>
-    `<div class="history-row"><strong>${escapeHtml(h.responsavel)}</strong> · ${escapeHtml(h.acao.replaceAll("_", " ").toLowerCase())}<br><span>${escapeHtml(formatDate(h.data_hora))}</span></div>`
-  ).join("") : "Nenhuma ação registrada até o momento.";
+async function loadMedications() {
+  const data = await api("/api/medicamentos");
+  const lista = data.medicamentos || [];
+  $("medList").innerHTML = lista.length ? lista.map(m => {
+    const detalhes = [m.dose, m.frequencia, m.horarios].filter(Boolean).map(escapeHtml).join(" · ");
+    return `<div class="history-row"><strong>${escapeHtml(m.nome)}</strong>${detalhes ? `<br><span>${detalhes}</span>` : ""}</div>`;
+  }).join("") : "Nenhum medicamento cadastrado até o momento.";
 }
 async function refresh() {
   try {
-    await Promise.all([loadActivities(), loadHistory()]);
+    await Promise.all([loadActivities(), loadMedications()]);
     hideMessage($("appMessage"));
   } catch (error) {
     showMessage($("appMessage"), error.message);
@@ -87,7 +85,6 @@ $("loginForm").addEventListener("submit", async (event) => {
   try {
     const data = await api("/api/login", { method: "POST", body: JSON.stringify({ email: $("email").value, senha: $("senha").value }) });
     setSignedIn(data.user);
-    if (data.user.perfil === "ADMIN") await loadPeople();
     await refresh();
   } catch (error) {
     showMessage($("loginMessage"), error.message);
@@ -108,7 +105,6 @@ $("registerForm").addEventListener("submit", async (event) => {
     const data = await api("/api/login/cadastro", { method: "POST", body: JSON.stringify({ nome: $("regNome").value, email: $("regEmail").value, senha: $("regSenha").value, convite: $("regConvite").value.trim() }) });
     $("registerForm").reset();
     setSignedIn(data.user);
-    if (data.user.perfil === "ADMIN") await loadPeople();
     await refresh();
   } catch (error) {
     showMessage($("loginMessage"), error.message);
@@ -118,21 +114,6 @@ $("logoutButton").addEventListener("click", async () => {
   try { await api("/api/logout", { method: "POST", body: "{}" }); } finally { setSignedIn(null); }
 });
 $("refreshButton").addEventListener("click", refresh);
-$("activityForm").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  try {
-    const rawDate = $("dueDate").value;
-    await api("/api/atividades", { method: "POST", body: JSON.stringify({
-      id_pessoa: Number($("person").value),
-      titulo: $("title").value,
-      descricao: $("description").value,
-      data_hora: rawDate ? rawDate.replace("T", " ") + ":00" : null
-    }) });
-    $("activityForm").reset();
-    showMessage($("appMessage"), "Atividade cadastrada.", "success");
-    await refresh();
-  } catch (error) { showMessage($("appMessage"), error.message); }
-});
 $("activityList").addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-action]");
   if (!button) return;
@@ -146,7 +127,6 @@ $("activityList").addEventListener("click", async (event) => {
   try {
     const data = await api("/api/me");
     setSignedIn(data.user);
-    if (data.user.perfil === "ADMIN") await loadPeople();
     await refresh();
   } catch (_error) {
     setSignedIn(null);
