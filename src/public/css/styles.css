@@ -26,3 +26,33 @@ body { background: #f7faf8; color: var(--ink); min-height: 100vh; }
 .history-row { border-bottom: 1px solid var(--line); padding: .7rem 0; }
 .history-row:last-child { border-bottom: 0; }
 footer { text-align: center; }
+a { color: var(--green); }
+a:hover { color: #20563f; }
+.text-primary { color: var(--green) !important; }
+.border-primary { border-color: var(--green) !important; }
+.btn-outline-primary { --bs-btn-color: #286b51; --bs-btn-border-color: #286b51; --bs-btn-hover-bg: #286b51; --bs-btn-hover-border-color: #286b51; --bs-btn-active-bg: #286b51; --bs-btn-active-border-color: #286b51; --bs-btn-disabled-color: #286b51; --bs-btn-disabled-border-color: #286b51; }
+.btn-outline-secondary.text-primary, .btn-link { color: var(--green); }
+
+/* Páginas internas */
+body.page { max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+body.page h1 { font-size: 1.75rem; font-weight: 800; letter-spacing: -.03em; }
+body.page h2 { font-size: 1.25rem; margin-top: 1.5rem; }
+body.page a { color: var(--green); }
+body.page table { width: 100%; background: #fff; border: 1px solid var(--line); border-radius: 12px; border-collapse: separate; border-spacing: 0; margin: 1rem 0; overflow: hidden; }
+body.page th, body.page td { border-bottom: 1px solid var(--line); padding: .6rem .75rem; text-align: left; }
+body.page th { background: var(--pale); color: var(--ink); font-size: .85rem; }
+body.page tr:last-child td { border-bottom: 0; }
+body.page form { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 1rem 1.25rem; margin: 1rem 0; }
+body.page label { display: block; margin-top: .6rem; font-weight: 600; font-size: .9rem; }
+body.page form#filtros label { display: inline-block; margin-right: 1rem; }
+body.page input, body.page select, body.page textarea { display: block; width: 100%; max-width: 100%; padding: .4rem .6rem; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+body.page input[type=checkbox] { display: inline; width: auto; }
+body.page form#filtros input, body.page form#filtros select { display: inline-block; width: auto; }
+body.page button { background: var(--green); color: #fff; border: 1px solid var(--green); border-radius: 8px; padding: .4rem .85rem; margin: .4rem .3rem 0 0; cursor: pointer; }
+body.page button:hover { background: #20563f; }
+body.page .erro { color: #b00020; min-height: 1.2em; }
+body.page .aviso { color: #7a5200; }
+body.page .contagens { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
+body.page .contagens div { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: .8rem 1.25rem; min-width: 8rem; color: var(--muted); }
+body.page .contagens strong { display: block; font-size: 1.8rem; color: var(--ink); }
+[hidden] { display: none !important; }
