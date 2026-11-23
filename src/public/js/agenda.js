@@ -1,6 +1,14 @@
 const el = (id) => document.getElementById(id);
 
 const ROTULOS = { PENDENTE: "Pendente", ASSUMIDA: "Assumida", CONCLUIDA: "Concluída", CANCELADA: "Cancelada" };
+function venc(i) {
+  if (i.status !== "PENDENTE" || !i.data_hora) return false;
+  const d = String(i.data_hora).replace(" ", "T");
+  const hoje = new Date();
+  const hojeStr = hoje.getFullYear() + "-" + String(hoje.getMonth() + 1).padStart(2, "0") + "-" + String(hoje.getDate()).padStart(2, "0");
+  if (i.origem === "ATIVIDADE") return new Date(d).getTime() < Date.now();
+  return d.slice(0, 10) <= hojeStr;
+}
 
 function esc(valor) {
   return String(valor ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -28,7 +36,7 @@ async function carregar(filtros = {}) {
     const itens = (dados.itens || []).slice().sort((a, b) => tempo(a) - tempo(b));
     el("vazio").hidden = itens.length > 0;
     el("itens").innerHTML = itens.map((i) =>
-      `<tr${i.status === "PENDENTE" ? ' class="table-warning fw-bold" style="border-left:4px solid #dc3545"' : ""}><td>${i.origem === "ATIVIDADE" ? "Atividade" : "Compromisso"}</td><td>${esc(i.titulo)}</td><td>${esc(dataHora(i.data_hora))}</td><td>${i.status === "PENDENTE" ? '<span class="badge bg-danger">Pendente</span>' : esc(i.status ? (ROTULOS[i.status] || i.status) : "-")}</td><td>${esc(i.pessoa)}</td></tr>`
+      `<tr${venc(i) ? ' class="table-warning fw-bold" style="border-left:4px solid #dc3545"' : ""}><td>${i.origem === "ATIVIDADE" ? "Atividade" : "Compromisso"}</td><td>${esc(i.titulo)}</td><td>${esc(dataHora(i.data_hora))}</td><td>${i.status === "PENDENTE" ? (venc(i) ? '<span class="badge bg-danger">Pendente</span>' : "Pendente") : esc(i.status ? (ROTULOS[i.status] || i.status) : "-")}</td><td>${esc(i.pessoa)}</td></tr>`
     ).join("");
   } catch (erro) {
     el("erro").textContent = erro.message;

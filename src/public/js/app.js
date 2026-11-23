@@ -57,7 +57,7 @@ async function loadActivities() {
       <div><div class="activity-title">${escapeHtml(a.titulo)}${a.pessoa ? " - Para " + escapeHtml(a.pessoa) : ""}</div>
       <div class="activity-meta">${escapeHtml(formatDate(a.data_hora))}</div>
       ${a.descricao ? `<div class="small mt-1">${escapeHtml(a.descricao)}</div>` : ""}
-      <div class="small text-secondary mt-1">Responsável: ${escapeHtml(a.responsavel || "Ainda não assumida")}</div></div>
+      <div class="small text-secondary mt-1">Responsável: ${a.responsavel ? escapeHtml(a.responsavel) : '<span class="text-danger fw-bold">N\u00e3o definido</span>'}</div></div>
       <div class="d-flex flex-wrap align-items-center gap-2">${a.status === "PENDENTE" ? `<span class="badge bg-danger fs-6">${statusLabel(a.status)}</span>` : `<span class="status">${statusLabel(a.status)}</span>`}${actions}</div>
     </article>`;
   }).join("") : '<p class="text-secondary mb-0">Nenhuma atividade pendente.</p>';
@@ -69,6 +69,13 @@ async function loadMedications() {
   const hoje = agora.toDateString();
   const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
   let pendentes = [];
+  let totalAtrasos = 0;
+  const assumidos = new Set();
+  try {
+    const oc = await api("/api/ocorrencias?tipo=MEDICAMENTO");
+    (oc.ocorrencias || []).forEach(o => assumidos.add(o.id_ref + "|" + o.chave));
+  } catch (_e) { /* sem ocorrencias */ }
+  const dh = agora.getFullYear() + "-" + String(agora.getMonth() + 1).padStart(2, "0") + "-" + String(agora.getDate()).padStart(2, "0");
   const fmt = min => String(Math.floor(min / 60)).padStart(2, "0") + ":" + String(min % 60).padStart(2, "0");
   try {
     const marcados = await Promise.all(lista.map(async m => {
@@ -85,13 +92,16 @@ async function loadMedications() {
         restantes.splice(melhor, 1);
       });
       if (!restantes.length) return null;
-      const futuras = restantes.filter(h => h > minutosAgora);
-      return { m, proxima: futuras.length ? futuras[0] : null, atrasadas: restantes.filter(h => h <= minutosAgora) };
+      const pend = restantes.filter(h => !assumidos.has(m.id_medicamento + "|" + dh + " " + fmt(h)));
+      if (restantes.some(h => h <= minutosAgora)) totalAtrasos += 1;
+      if (!pend.length) return null;
+      const futuras = pend.filter(h => h > minutosAgora);
+      return { m, proxima: futuras.length ? futuras[0] : null, atrasadas: pend.filter(h => h <= minutosAgora) };
     }));
     pendentes = marcados.filter(Boolean);
   } catch (_e) { pendentes = []; }
   $("medPendingCount").textContent = pendentes.length;
-  const nAtr = pendentes.filter(p => p.atrasadas.length).length;
+  const nAtr = totalAtrasos;
   const alertaAtr = nAtr ? '<div class="alert alert-danger fw-bold" role="alert">ALERTA: ' + nAtr + ' medicamento(s) com horário vencido e administração não registrada!</div>' : "";
   $("medList").innerHTML = alertaAtr + (pendentes.length ? pendentes.map(({ m, proxima, atrasadas }) => {
     const extra = [];
@@ -100,7 +110,7 @@ async function loadMedications() {
     else if (!atrasadas.length && m.horarios) extra.push(escapeHtml(m.horarios));
     const detalhes = [m.dose, m.frequencia].filter(Boolean).map(escapeHtml).concat(extra).join(" - ");
     const atrasado = atrasadas.length > 0;
-    return `<div class="history-row d-flex flex-wrap justify-content-between align-items-center gap-3"${atrasado ? ' style="color:#dc3545"' : ""}><div><strong>${escapeHtml(m.nome)}</strong>${m.pessoa ? " - Para " + escapeHtml(m.pessoa) : ""}${detalhes ? `<br><span>${detalhes}</span>` : ""}</div><div class="text-center"><span class="badge bg-danger fs-6">Pendente</span></div><div class="text-end text-body" style="min-width:180px"><div class="small text-secondary">Responsável</div><strong>${escapeHtml(m.responsaveis || "Não definido")}</strong></div></div>`;
+    return `<div class="history-row d-flex flex-wrap justify-content-between align-items-center gap-3"${atrasado ? ' style="color:#dc3545"' : ""}><div><strong>${escapeHtml(m.nome)}</strong>${m.pessoa ? " - Para " + escapeHtml(m.pessoa) : ""}${detalhes ? `<br><span>${detalhes}</span>` : ""}</div><div class="text-center"><span class="badge ${atrasado ? "bg-danger" : "bg-secondary"} fs-6">Pendente</span></div><div class="text-end text-body" style="min-width:180px"><div class="small text-secondary">Responsável</div><strong class="${m.responsaveis ? "" : "text-danger fw-bold"}">${escapeHtml(m.responsaveis || "Não definido")}</strong></div></div>`;
   }).join("") : "Nenhum medicamento pendente no momento.");
 }
 async function carregarPendentesCompromissos() {
@@ -108,7 +118,7 @@ async function carregarPendentesCompromissos() {
     const r = await api("/api/compromissos");
     const pend = (r.compromissos || []).filter(c => c.vencido);
     $("apptPendingCount").textContent = pend.length;
-    $("apptList").innerHTML = pend.length ? pend.map(c => `<div class="history-row d-flex flex-wrap justify-content-between align-items-center gap-3"><div><strong>${escapeHtml(c.descricao)}</strong>${c.pessoa ? " - Para " + escapeHtml(c.pessoa) : ""}<br><span>${c.tipo === "EXAME" ? "Exame" : "Consulta"} - ${escapeHtml(formatDate(c.data_hora))}</span></div><div class="text-center"><span class="badge bg-danger fs-6">${escapeHtml(statusLabel(c.status || "PENDENTE"))}</span></div><div class="text-end" style="min-width:180px"><div class="small text-secondary">Responsável</div><strong class="${c.responsavel ? '' : 'text-danger'}">${escapeHtml(c.responsavel || "Ainda não assumido")}</strong></div></div>`).join("") : "Nenhuma consulta ou exame pendente.";
+    $("apptList").innerHTML = pend.length ? pend.map(c => `<div class="history-row d-flex flex-wrap justify-content-between align-items-center gap-3"><div><strong>${escapeHtml(c.descricao)}</strong>${c.pessoa ? " - Para " + escapeHtml(c.pessoa) : ""}<br><span>${c.tipo === "EXAME" ? "Exame" : "Consulta"} - ${escapeHtml(formatDate(c.data_hora))}</span></div><div class="text-center"><span class="badge bg-danger fs-6">${escapeHtml(statusLabel(c.status || "PENDENTE"))}</span></div><div class="text-end" style="min-width:180px"><div class="small text-secondary">Responsável</div><strong class="${c.responsavel ? '' : 'text-danger'}">${escapeHtml(c.responsavel || "N\u00e3o definido")}</strong></div></div>`).join("") : "Nenhuma consulta ou exame pendente.";
   } catch (_e) {
     $("apptPendingCount").textContent = "0";
     $("apptList").textContent = "Nenhuma consulta ou exame pendente.";

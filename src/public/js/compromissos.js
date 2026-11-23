@@ -16,7 +16,7 @@
   function vencido(c) {
     const agora = agoraEstimado();
     if ((c.status || "PENDENTE") !== "PENDENTE") return false;
-    return agora ? String(c.data_hora).slice(0, 16) <= agora : !!c.vencido;
+    return agora ? String(c.data_hora).slice(0, 10) <= agora.slice(0, 10) : !!c.vencido;
   }
 
   async function api(url, opcoes) {
@@ -58,6 +58,7 @@
     $("tabela").hidden = compromissos.length === 0;
     const corpo = $("corpo");
     corpo.textContent = "";
+    const alertas = [];
     compromissos.forEach((c) => {
       const tr = document.createElement("tr");
       celula(tr, c.tipo === "EXAME" ? "Exame" : "Consulta");
@@ -71,6 +72,7 @@
         const sp = document.createElement("span");
         sp.className = "badge bg-danger";
         sp.textContent = "Pendente";
+        alertas.push((c.tipo === "EXAME" ? "Exame" : "Consulta") + " - " + c.descricao + " (" + formatarData(c.data_hora) + ")");
         celula(tr, sp);
         tr.className = "table-warning fw-bold";
         tr.style.borderLeft = "4px solid #dc3545";
@@ -80,7 +82,7 @@
       if (c.responsavel) celula(tr, c.responsavel);
       else {
         const nao = document.createElement("strong");
-        nao.textContent = "Ainda não assumido";
+        nao.textContent = "Não definido";
         nao.style.color = "#dc3545";
         celula(tr, nao);
       }
@@ -98,6 +100,16 @@
       celula(tr, acoes);
       corpo.appendChild(tr);
     });
+    let el = document.getElementById("alerta-pendentes");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "alerta-pendentes";
+      el.setAttribute("role", "alert");
+      el.style.cssText = "background:#f8d7da;color:#b02a37;border:2px solid #dc3545;padding:10px 14px;margin:10px 0;font-weight:bold";
+      $("tabela").parentNode.insertBefore(el, $("tabela"));
+    }
+    el.hidden = alertas.length === 0;
+    el.textContent = alertas.length ? "ALERTA: pendente - " + alertas.join("; ") : "";
   }
 
   function limparMensagens() {
