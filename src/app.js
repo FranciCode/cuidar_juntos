@@ -93,6 +93,7 @@ app.use("/api/atividades", require("./routes/atividades")(getPool));
 app.use("/api/compromissos", require("./routes/compromissos")(getPool));
 app.use("/api/pessoas", require("./routes/pessoas")(getPool));
 app.use("/api/medicamentos", require("./routes/medicamentos")(getPool));
+app.use("/api/ocorrencias", require("./routes/ocorrencias")(getPool));
 app.use("/api/agenda", require("./routes/agenda")(getPool));
 app.use("/api/historico", require("./routes/historico")(getPool));
 

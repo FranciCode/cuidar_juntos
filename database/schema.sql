@@ -159,3 +159,14 @@ CREATE TABLE IF NOT EXISTS HISTORICO (
 -- Exemplo para gerar hash localmente:
 -- node -e "require('bcryptjs').hash('SuaSenhaDeTeste!', 12).then(console.log)"
 -- Em seguida, use o hash gerado para inserir um usuário de teste.
+
+CREATE TABLE IF NOT EXISTS OCORRENCIA_RESPONSAVEL (
+  id_ocorrencia INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  tipo ENUM('ATIVIDADE','MEDICAMENTO') NOT NULL,
+  id_ref INT UNSIGNED NOT NULL,
+  chave VARCHAR(20) NOT NULL,
+  id_usuario INT UNSIGNED NOT NULL,
+  criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_ocorrencia (tipo, id_ref, chave),
+  CONSTRAINT fk_ocorrencia_usuario FOREIGN KEY (id_usuario) REFERENCES USUARIO(id_usuario)
+);

@@ -4,6 +4,7 @@
   let atividades = [];
   let pessoas = [];
   let editando = null;
+  let ocorrencias = {};
 
   async function api(url, opcoes) {
     const res = await fetch((window.BASE_URL || "") + url, {
@@ -46,31 +47,51 @@
     const corpo = $("corpo");
     corpo.textContent = "";
     const linhas = [];
+    const alertas = [];
     atividades.forEach((a) => {
       const datas = datasDiarias(a);
-      if (datas.length) datas.forEach((d) => linhas.push({ a, texto: d }));
+      if (datas.length) datas.forEach((d) => linhas.push({ a, texto: d.texto, oc: d }));
       else linhas.push({ a, texto: formatarData(a.data_hora) });
     });
-    linhas.forEach(({ a, texto }) => {
+    linhas.forEach(({ a, texto, oc }) => {
       const tr = document.createElement("tr");
       celula(tr, a.pessoa || "-");
       celula(tr, a.titulo + (a.dias_semana ? " - diária" : ""));
       celula(tr, texto);
-      if (a.status === "PENDENTE") {
-        const sp = document.createElement("span");
-        sp.className = "badge bg-danger";
-        sp.textContent = "Pendente";
-        celula(tr, sp);
-        tr.className = "table-warning fw-bold";
-        tr.style.borderLeft = "4px solid #dc3545";
-      } else {
+      const resp = oc ? ocorrencias[a.id_atividade + "|" + oc.chave] : null;
+      const emAberto = a.status === "PENDENTE" || a.status === "ASSUMIDA";
+      const quando = oc ? oc.dt : parseDataHora(a.data_hora);
+      const atrasada = quando && quando.getTime() < Date.now();
+      const assumida = oc ? !!resp : a.status === "ASSUMIDA";
+      if (!emAberto) {
         celula(tr, a.status);
+      } else if (assumida) {
+        celula(tr, "Assumida");
+      } else {
+        const sp = document.createElement("span");
+        sp.textContent = "Pendente";
+        if (atrasada) {
+          sp.className = "badge bg-danger";
+          tr.className = "table-warning fw-bold";
+          tr.style.borderLeft = "4px solid #dc3545";
+          alertas.push(a.titulo + " - " + texto);
+        }
+        celula(tr, sp);
       }
-      celula(tr, a.responsavel || "-");
+      const nomeResp = oc ? (resp && resp.responsavel) : a.responsavel;
+      if (nomeResp) {
+        celula(tr, nomeResp);
+      } else {
+        const nd = celula(tr, "N\u00e3o definido");
+        nd.style.color = "#dc3545";
+        nd.style.fontWeight = "bold";
+      }
       const acoes = document.createElement("div");
       const aberta = a.status === "PENDENTE" || a.status === "ASSUMIDA";
-      if (a.status === "PENDENTE") acoes.appendChild(botao("Assumir", () => acaoPatch(a, "assumir")));
-      if (a.status === "ASSUMIDA" && (admin || a.id_responsavel === usuario.id)) {
+      if (oc) {
+        if (aberta && !resp) acoes.appendChild(botao("Assumir", () => assumirOcorrencia(a, oc)));
+      } else if (a.status === "PENDENTE") acoes.appendChild(botao("Assumir", () => acaoPatch(a, "assumir")));
+      if (!oc && a.status === "ASSUMIDA" && (admin || a.id_responsavel === usuario.id)) {
         acoes.appendChild(botao("Liberar", () => acaoPatch(a, "liberar")));
         acoes.appendChild(botao("Concluir", () => acaoPatch(a, "concluir")));
       }
@@ -81,6 +102,33 @@
       celula(tr, acoes);
       corpo.appendChild(tr);
     });
+    mostrarAlertas(alertas);
+  }
+
+  function mostrarAlertas(lista) {
+    let el = document.getElementById("alerta-pendentes");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "alerta-pendentes";
+      el.setAttribute("role", "alert");
+      el.style.cssText = "background:#f8d7da;color:#b02a37;border:2px solid #dc3545;padding:10px 14px;margin:10px 0;font-weight:bold";
+      $("tabela").parentNode.insertBefore(el, $("tabela"));
+    }
+    el.hidden = lista.length === 0;
+    el.textContent = lista.length ? "ALERTA: atividade pendente - " + lista.join("; ") : "";
+  }
+
+  function parseDataHora(v) {
+    if (!v) return null;
+    const d = new Date(String(v).replace(" ", "T"));
+    return isNaN(d) ? null : d;
+  }
+
+  async function assumirOcorrencia(a, oc) {
+    limparMensagens();
+    const res = await api("/api/ocorrencias/assumir", { method: "POST", body: JSON.stringify({ tipo: "ATIVIDADE", id: a.id_atividade, chave: oc.chave }) });
+    if (res.status !== 200) $("erro-geral").textContent = res.body.error || "Falha ao assumir.";
+    await carregar();
   }
 
   const NOMES_DIAS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -94,8 +142,16 @@
       const dt = new Date(hoje);
       dt.setDate(dt.getDate() + ((d - hoje.getDay() + 7) % 7));
       return dt;
-    }).sort((x, y) => x - y).map((dt) =>
-      String(dt.getDate()).padStart(2, "0") + "/" + String(dt.getMonth() + 1).padStart(2, "0") + "/" + dt.getFullYear() + (hora ? " " + hora : ""));
+    }).sort((x, y) => x - y).map((dt) => {
+      const chave = dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0");
+      const quando = new Date(dt);
+      if (hora) quando.setHours(Number(hora.slice(0, 2)), Number(hora.slice(3, 5)), 0, 0);
+      return {
+        chave,
+        dt: quando,
+        texto: String(dt.getDate()).padStart(2, "0") + "/" + String(dt.getMonth() + 1).padStart(2, "0") + "/" + dt.getFullYear() + (hora ? " " + hora : "")
+      };
+    });
   }
 
   function descreverDias(a) {
@@ -129,6 +185,9 @@
     const res = await api("/api/atividades");
     if (res.status === 200) {
       atividades = res.body.atividades;
+      const oc = await api("/api/ocorrencias?tipo=ATIVIDADE");
+      ocorrencias = {};
+      if (oc.status === 200) (oc.body.ocorrencias || []).forEach((o) => { ocorrencias[o.id_ref + "|" + o.chave] = o; });
       render();
     } else {
       $("erro-geral").textContent = res.body.error || "Não foi possível carregar as atividades.";

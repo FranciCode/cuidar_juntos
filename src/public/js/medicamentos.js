@@ -4,6 +4,12 @@
   let medicamentos = [];
   let editando = null;
   let atual = null;
+  let ocorrencias = {};
+
+  function chaveHoje(h) {
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0") + " " + h;
+  }
 
   async function api(url, opcoes) {
     const res = await fetch((window.BASE_URL || "") + url, {
@@ -110,11 +116,32 @@
       const hs = listarHorarios(m.horarios);
       (hs.length ? hs : (m.horarios ? [m.horarios] : [])).forEach((h) => {
         const l = document.createElement("div");
-        l.textContent = h;
+        l.style.marginBottom = "4px";
+        const rot = document.createElement("span");
+        rot.textContent = h;
         if ((m._atrasados || []).includes(h)) {
-          l.style.color = "#dc3545";
-          l.style.fontWeight = "bold";
-          l.textContent = h + " (atrasado)";
+          rot.style.color = "#dc3545";
+          rot.style.fontWeight = "bold";
+          rot.textContent = h + " (atrasado)";
+        }
+        l.appendChild(rot);
+        if (/^\d{2}:\d{2}$/.test(h)) {
+          const resp = ocorrencias[m.id_medicamento + "|" + chaveHoje(h)];
+          const quem = document.createElement("span");
+          quem.style.marginLeft = "8px";
+          if (resp) {
+            quem.textContent = "- " + resp.responsavel;
+          } else {
+            quem.textContent = "- Não definido";
+            quem.style.color = "#dc3545";
+            quem.style.fontWeight = "bold";
+          }
+          l.appendChild(quem);
+          if (!resp && m.pode_registrar_administracao) {
+            const b = botao("Assumir", () => assumirHorario(m, h));
+            b.style.marginLeft = "8px";
+            l.appendChild(b);
+          }
         }
         boxH.appendChild(l);
       });
@@ -130,12 +157,16 @@
       tdHor.style.minWidth = "140px";
       tdHor.style.padding = "10px 14px";
       tdHor.style.lineHeight = "1.5";
-      celula(tr, m.responsaveis || "Não definido").style.padding = "10px 14px";
+      const tdResp = celula(tr, m.responsaveis || "Não definido");
+      tdResp.style.padding = "10px 14px";
+      if (!m.responsaveis) {
+        tdResp.style.color = "#dc3545";
+        tdResp.style.fontWeight = "bold";
+      }
       const acoes = document.createElement("div");
       acoes.style.display = "flex";
       acoes.style.flexWrap = "nowrap";
       acoes.style.gap = "6px";
-      if (!m.id_responsavel && m.pode_registrar_administracao) acoes.appendChild(botao("Assumir", () => assumir(m)));
       acoes.appendChild(botao("Histórico", () => abrirPainel(m)));
       if (m.pode_registrar_administracao) acoes.appendChild(botao("Registrar administração", () => abrirPainel(m, true)));
       if (ehAdmin()) {
@@ -176,6 +207,9 @@
     const res = await api("/api/medicamentos");
     if (res.status === 200) {
       medicamentos = res.body.medicamentos;
+      const oc = await api("/api/ocorrencias?tipo=MEDICAMENTO");
+      ocorrencias = {};
+      if (oc.status === 200) (oc.body.ocorrencias || []).forEach((o) => { ocorrencias[o.id_ref + "|" + o.chave] = o; });
       await calcularAtrasos();
       render();
     } else {
@@ -183,9 +217,9 @@
     }
   }
 
-  async function assumir(m) {
+  async function assumirHorario(m, h) {
     limparMensagens();
-    const res = await api(`/api/medicamentos/${m.id_medicamento}/assumir`, { method: "POST" });
+    const res = await api("/api/ocorrencias/assumir", { method: "POST", body: JSON.stringify({ tipo: "MEDICAMENTO", id: m.id_medicamento, chave: chaveHoje(h) }) });
     if (res.status !== 200) $("erro-geral").textContent = res.body.error || "Não foi possível assumir.";
     await carregar();
   }
