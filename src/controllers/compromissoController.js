@@ -6,7 +6,14 @@ function handler(getPool, acao) {
       const db = await getPool();
       const result = await acao(db, req);
       res.status(result.status).json(result.body);
-    } catch (_error) {
+    } catch (error) {
+      console.error("[compromissos] erro interno:", {
+        metodo: req.method,
+        rota: req.baseUrl,
+        code: error && error.code,
+        errno: error && error.errno,
+        sqlMessage: error && (error.sqlMessage || error.message)
+      });
       res.status(500).json({ error: "Não foi possível concluir a operação." });
     }
   };
