@@ -8,5 +8,6 @@ module.exports = (getPool, requireAuth, requireAdmin) => {
   router.post("/", usuarioController.criar(getPool));
   router.put("/:id", usuarioController.editar(getPool));
   router.patch("/:id/status", usuarioController.alterarStatus(getPool));
+  router.post("/:id/redefinicao", usuarioController.gerarRedefinicao(getPool));
   return router;
 };

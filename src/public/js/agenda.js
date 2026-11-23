@@ -9,7 +9,8 @@ function esc(valor) {
 function dataHora(valor) {
   if (!valor) return "Sem data definida";
   const d = new Date(valor);
-  return Number.isNaN(d.getTime()) ? String(valor) : d.toLocaleString("pt-BR");
+  if (Number.isNaN(d.getTime())) return String(valor);
+  return d.toLocaleDateString("pt-BR") + " - " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
 
 async function carregar(filtros = {}) {
@@ -23,10 +24,11 @@ async function carregar(filtros = {}) {
     const dados = await resposta.json().catch(() => ({}));
     if (!resposta.ok) throw new Error(dados.error || "Ocorreu um erro.");
     el("erro").textContent = "";
-    const itens = dados.itens || [];
+    const tempo = (i) => { const t = i.data_hora ? new Date(i.data_hora).getTime() : NaN; return Number.isNaN(t) ? Infinity : t; };
+    const itens = (dados.itens || []).slice().sort((a, b) => tempo(a) - tempo(b));
     el("vazio").hidden = itens.length > 0;
     el("itens").innerHTML = itens.map((i) =>
-      `<tr><td>${i.origem === "ATIVIDADE" ? "Atividade" : "Compromisso"}</td><td>${esc(i.titulo)}</td><td>${esc(dataHora(i.data_hora))}</td><td>${esc(i.status ? (ROTULOS[i.status] || i.status) : "-")}</td><td>${esc(i.pessoa)}</td></tr>`
+      `<tr${i.status === "PENDENTE" ? ' class="table-warning fw-bold" style="border-left:4px solid #dc3545"' : ""}><td>${i.origem === "ATIVIDADE" ? "Atividade" : "Compromisso"}</td><td>${esc(i.titulo)}</td><td>${esc(dataHora(i.data_hora))}</td><td>${i.status === "PENDENTE" ? '<span class="badge bg-danger">Pendente</span>' : esc(i.status ? (ROTULOS[i.status] || i.status) : "-")}</td><td>${esc(i.pessoa)}</td></tr>`
     ).join("");
   } catch (erro) {
     el("erro").textContent = erro.message;

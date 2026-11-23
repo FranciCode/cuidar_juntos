@@ -49,7 +49,16 @@ function validarDados(dados) {
     }
     dataHora = `${a}-${mes}-${d} ${h}:${mi}:${s}`;
   }
-  return { titulo, descricao, dataHora };
+
+  let diasSemana = null;
+  const dias = dados.dias_semana;
+  if (dias !== undefined && dias !== null && !(Array.isArray(dias) && dias.length === 0)) {
+    if (!Array.isArray(dias)) return { erro: "Dias da semana inválidos." };
+    const nums = dias.map((d) => (/^\d$/.test(String(d)) ? Number(d) : NaN));
+    if (nums.some((n) => !Number.isInteger(n) || n < 0 || n > 6)) return { erro: "Dias da semana inválidos." };
+    diasSemana = [...new Set(nums)].sort((a, b) => a - b).join(",");
+  }
+  return { titulo, descricao, dataHora, diasSemana };
 }
 
 async function listar(db, usuario, status) {
@@ -69,7 +78,7 @@ async function criar(db, usuario, dados) {
 
   return executar(db, async (conn) => {
     if (!(await pessoaRepository.temVinculo(conn, idPessoa, usuario.id))) falha(403, "Acesso negado.");
-    const id = await atividadeRepository.inserir(conn, idPessoa, valido.titulo, valido.descricao, valido.dataHora, usuario.id);
+    const id = await atividadeRepository.inserir(conn, idPessoa, valido.titulo, valido.descricao, valido.dataHora, usuario.id, valido.diasSemana);
     await historicoRepository.registrarEntidade(conn, usuario.id, "ATIVIDADE_CRIADA", ENTIDADE, id);
     const atividade = await atividadeRepository.buscarDetalhe(conn, id);
     return { status: 201, body: { atividade } };
@@ -103,7 +112,7 @@ async function editar(db, usuario, id, dados) {
 
     const resp = atual.status === "ASSUMIDA" ? await atividadeRepository.responsavelAtivo(conn, id) : null;
     const { aviso, detalhes } = avisoPara(resp, usuario);
-    await atividadeRepository.atualizarDados(conn, id, valido.titulo, valido.descricao, valido.dataHora);
+    await atividadeRepository.atualizarDados(conn, id, valido.titulo, valido.descricao, valido.dataHora, valido.diasSemana);
     await historicoRepository.registrarEntidade(conn, usuario.id, "ATIVIDADE_ALTERADA", ENTIDADE, id, detalhes);
     const atividade = await atividadeRepository.buscarDetalhe(conn, id);
     const body = { atividade };

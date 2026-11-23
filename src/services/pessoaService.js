@@ -15,6 +15,12 @@ function hojeISO() {
   return `${d.getFullYear()}-${mes}-${dia}`;
 }
 
+const LIMITES = {
+  cpf: 14, rg: 20, cartao_sus: 15, sexo: 20, estado_civil: 30, endereco: 300,
+  emergencia_nome: 120, emergencia_parentesco: 60, emergencia_telefone: 20, tipo_sanguineo: 10,
+  alergias: 500, condicoes_saude: 500, medicamentos_continuos: 500, restricoes: 500
+};
+
 function validarDados(dados) {
   const nome = String((dados && dados.nome) || "").trim();
   if (!nome) return { erro: "Informe o nome da pessoa." };
@@ -27,7 +33,14 @@ function validarDados(dados) {
     return { erro: "Data de nascimento inválida." };
   }
   if (nascimento > hojeISO()) return { erro: "A data de nascimento não pode estar no futuro." };
-  return { nome, nascimento };
+
+  const ficha = {};
+  for (const [campo, limite] of Object.entries(LIMITES)) {
+    const valor = String((dados && dados[campo]) || "").trim();
+    if (valor.length > limite) return { erro: `O campo ${campo} deve ter no máximo ${limite} caracteres.` };
+    ficha[campo] = valor || null;
+  }
+  return { nome, nascimento, ficha };
 }
 
 async function listar(db, usuario) {
@@ -41,7 +54,7 @@ async function criar(db, usuario, dados) {
   if (!dados || dados.consentimento !== true) return erro(400, "O consentimento é obrigatório.");
 
   const pessoa = await withTransaction(db, async (conn) => {
-    const idPessoa = await pessoaRepository.inserir(conn, valido.nome, valido.nascimento);
+    const idPessoa = await pessoaRepository.inserir(conn, valido.nome, valido.nascimento, valido.ficha, usuario.id);
     const usuarios = await pessoaRepository.listarUsuariosAtivos(conn);
     for (const u of usuarios) {
       await pessoaRepository.vincular(conn, u.id_usuario, idPessoa, u.perfil === "ADMIN");
@@ -57,7 +70,7 @@ async function editar(db, usuario, idPessoa, dados) {
   if (valido.erro) return erro(400, valido.erro);
 
   const pessoa = await withTransaction(db, async (conn) => {
-    await pessoaRepository.atualizar(conn, idPessoa, usuario.id, valido.nome, valido.nascimento);
+    await pessoaRepository.atualizar(conn, idPessoa, usuario.id, valido.nome, valido.nascimento, valido.ficha);
     await historicoRepository.registrarEntidade(conn, usuario.id, "PESSOA_ALTERADA", ENTIDADE, idPessoa);
     return pessoaRepository.buscarDoUsuario(conn, idPessoa, usuario.id);
   });

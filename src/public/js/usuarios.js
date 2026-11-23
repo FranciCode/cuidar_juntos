@@ -36,6 +36,7 @@ function render() {
       <td>${escapeHtml(u.status)}</td>
       <td class="text-end">
         <button class="btn btn-sm btn-outline-primary" data-acao="editar" data-id="${u.id_usuario}">Editar</button>
+        ${u.status === "ATIVO" ? `<button class="btn btn-sm btn-outline-secondary" data-acao="redefinir" data-id="${u.id_usuario}">Gerar link de senha</button>` : ""}
         ${u.status === "ATIVO"
           ? `<button class="btn btn-sm btn-outline-danger" data-acao="desativar" data-id="${u.id_usuario}">Desativar</button>`
           : `<button class="btn btn-sm btn-outline-success" data-acao="reativar" data-id="${u.id_usuario}">Reativar</button>`}
@@ -101,6 +102,16 @@ $("usuariosBody").addEventListener("click", async (event) => {
   const usuario = usuarios.find(u => u.id_usuario === id);
   esconder($("tabelaMensagem"));
   if (botao.dataset.acao === "editar") return abrirForm(usuario);
+  if (botao.dataset.acao === "redefinir") {
+    try {
+      const data = await api(`/api/usuarios/${id}/redefinicao`, { method: "POST" });
+      const link = `${window.location.origin}/?redefinir=${data.token}`;
+      mostrar($("tabelaMensagem"), `Link para ${usuario.nome} (válido por 60 minutos, exibido uma única vez): ${link}`, "success");
+    } catch (error) {
+      mostrar($("tabelaMensagem"), error.message);
+    }
+    return;
+  }
   const status = botao.dataset.acao === "desativar" ? "INATIVO" : "ATIVO";
   if (status === "INATIVO" && !window.confirm(`Desativar o usuário ${usuario.nome}?`)) return;
   try {

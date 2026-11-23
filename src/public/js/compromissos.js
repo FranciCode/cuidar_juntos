@@ -4,6 +4,20 @@
   let compromissos = [];
   let editando = null;
   let pendente = null;
+  let agoraServidor = null;
+  let recebidoEm = 0;
+
+  function agoraEstimado() {
+    if (!agoraServidor) return null;
+    const t = Date.parse(agoraServidor + ":00Z") + (Date.now() - recebidoEm);
+    return new Date(t).toISOString().slice(0, 16);
+  }
+
+  function vencido(c) {
+    const agora = agoraEstimado();
+    if ((c.status || "PENDENTE") !== "PENDENTE") return false;
+    return agora ? String(c.data_hora).slice(0, 16) <= agora : !!c.vencido;
+  }
 
   async function api(url, opcoes) {
     const res = await fetch(url, {
@@ -50,7 +64,33 @@
       celula(tr, formatarData(c.data_hora));
       celula(tr, c.descricao);
       celula(tr, c.pessoa || "-");
+      const stat = c.status || "PENDENTE";
+      if (stat === "PENDENTE" && !vencido(c)) {
+        celula(tr, "Agendado");
+      } else if (stat === "PENDENTE") {
+        const sp = document.createElement("span");
+        sp.className = "badge bg-danger";
+        sp.textContent = "Pendente";
+        celula(tr, sp);
+        tr.className = "table-warning fw-bold";
+        tr.style.borderLeft = "4px solid #dc3545";
+      } else {
+        celula(tr, stat);
+      }
+      if (c.responsavel) celula(tr, c.responsavel);
+      else {
+        const nao = document.createElement("strong");
+        nao.textContent = "Ainda não assumido";
+        nao.style.color = "#dc3545";
+        celula(tr, nao);
+      }
       const acoes = document.createElement("div");
+      const pend = (c.status || "PENDENTE") === "PENDENTE";
+      const ehResp = usuario && c.id_responsavel === usuario.id;
+      if (pend && !c.id_responsavel) acoes.appendChild(botao("Assumir", () => executarAcao(c, "assumir")));
+      if (pend && c.id_responsavel && (ehResp || admin)) acoes.appendChild(botao("Liberar", () => executarAcao(c, "liberar")));
+      if (pend && (ehResp || admin)) acoes.appendChild(botao("Concluir", () => executarAcao(c, "concluir")));
+      if (pend && admin) acoes.appendChild(botao("Cancelar", () => executarAcao(c, "cancelar")));
       if (admin) {
         acoes.appendChild(botao("Editar", () => abrirForm(c)));
         acoes.appendChild(botao("Excluir", () => excluir(c)));
@@ -75,10 +115,19 @@
     const res = await api("/api/compromissos");
     if (res.status === 200) {
       compromissos = res.body.compromissos;
+      agoraServidor = res.body.agora || null;
+      recebidoEm = Date.now();
       render();
     } else {
       $("erro-geral").textContent = res.body.error || "Não foi possível carregar os compromissos.";
     }
+  }
+
+  async function executarAcao(c, nome) {
+    limparMensagens();
+    const res = await api(`/api/compromissos/${c.id_compromisso}/acao/${nome}`, { method: "POST" });
+    if (res.status === 200) await carregar();
+    else $("erro-geral").textContent = res.body.error || "Não foi possível concluir a ação.";
   }
 
   async function excluir(c) {
@@ -179,5 +228,6 @@
   $("btn-confirmar").addEventListener("click", confirmar);
   $("btn-cancelar-conflito").addEventListener("click", esconderConflito);
   $("form").addEventListener("submit", salvar);
+  setInterval(() => { if (agoraServidor) render(); }, 30000);
   iniciar();
 })();

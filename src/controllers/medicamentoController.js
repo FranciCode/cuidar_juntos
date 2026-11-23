@@ -29,8 +29,9 @@ const listar = (getPool) => handler(getPool, (db, req) => medicamentoService.lis
 const criar = (getPool) => handler(getPool, (db, req) => medicamentoService.criar(db, req.session.user, req.body || {}));
 const editar = (getPool) => comId(getPool, (db, u, id, corpo) => medicamentoService.editar(db, u, id, corpo));
 const excluir = (getPool) => comId(getPool, (db, u, id) => medicamentoService.excluir(db, u, id));
+const assumir = (getPool) => comId(getPool, (db, u, id) => medicamentoService.assumir(db, u, id));
 const registrarAdministracao = (getPool) =>
   comId(getPool, (db, u, id, corpo) => medicamentoService.registrarAdministracao(db, u, id, corpo));
 const listarAdministracoes = (getPool) => comId(getPool, (db, u, id) => medicamentoService.listarAdministracoes(db, u, id));
 
-module.exports = { listar, criar, editar, excluir, registrarAdministracao, listarAdministracoes };
+module.exports = { listar, criar, editar, excluir, assumir, registrarAdministracao, listarAdministracoes };

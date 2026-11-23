@@ -37,8 +37,17 @@
         <input class="form-control mb-3" id="regConvite" maxlength="128" autocomplete="off">
         <button class="btn btn-primary w-100" type="submit">Criar conta</button>
       </form>
+      <form id="resetForm" class="mt-4 d-none">
+        <h2 class="h5">Definir nova senha</h2>
+        <label class="form-label" for="resetSenha">Nova senha (mínimo 8 caracteres)</label>
+        <input class="form-control mb-3" id="resetSenha" type="password" minlength="8" autocomplete="new-password" required>
+        <label class="form-label" for="resetSenha2">Confirme a nova senha</label>
+        <input class="form-control mb-3" id="resetSenha2" type="password" minlength="8" autocomplete="new-password" required>
+        <button class="btn btn-primary w-100" type="submit">Salvar nova senha</button>
+      </form>
       <div id="loginMessage" class="alert d-none mt-3 mb-0" role="alert"></div>
-      <p class="small text-secondary mt-3 mb-0"><span id="toggleText">Ainda não tem conta?</span> <a href="#" id="toggleAuth">Criar conta</a></p>
+      <p id="authToggleRow" class="small text-secondary mt-3 mb-0 d-none"><span id="toggleText">Ainda não tem conta?</span> <a href="#" id="toggleAuth">Criar conta</a></p>
+      <p id="forgotHint" class="small text-secondary mt-2 mb-0">Esqueceu a senha? Peça ao administrador da família um link de redefinição.</p>
     </section>
 
     <section id="appPanel" class="d-none">
@@ -55,16 +64,15 @@
         <a class="btn btn-sm btn-outline-primary" href="/pages/atividades.html">Atividades</a>
         <a class="btn btn-sm btn-outline-primary" href="/pages/compromissos.html">Consultas e exames</a>
         <a class="btn btn-sm btn-outline-primary" href="/pages/historico.html">Hist&oacute;rico</a>
-        <a class="btn btn-sm btn-outline-primary" href="/pages/painel.html">Indicadores</a>
         <a class="btn btn-sm btn-outline-primary" href="/pages/medicamentos.html">Medicamentos</a>
         <a class="btn btn-sm btn-primary" href="/">Painel familiar</a>
         <a class="btn btn-sm btn-outline-primary" data-roles="ADMIN" href="/pages/pessoa.html">Pessoas assistidas</a>
         <a class="btn btn-sm btn-outline-primary" data-roles="ADMIN" href="/pages/usuarios.html">Usu&aacute;rios e convites</a>
       </nav>
       <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-4"><div class="stat-card"><span>Pendentes</span><strong id="pendingCount">0</strong></div></div>
-        <div class="col-6 col-lg-4"><div class="stat-card"><span>Assumidas</span><strong id="assignedCount">0</strong></div></div>
-        <div class="col-12 col-lg-4"><div class="stat-card"><span>Concluídas</span><strong id="doneCount">0</strong></div></div>
+        <div class="col-12 col-lg-4"><div class="stat-card"><span>Atividades pendentes</span><strong id="pendingCount">0</strong></div></div>
+        <div class="col-6 col-lg-4"><div class="stat-card"><span>Consultas e exames pendentes</span><strong id="apptPendingCount">0</strong></div></div>
+        <div class="col-6 col-lg-4"><div class="stat-card"><span>Medicamentos pendentes</span><strong id="medPendingCount">0</strong></div></div>
       </div>
       <div class="panel-card mb-4">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
@@ -73,6 +81,10 @@
         </div>
         <div id="appMessage" class="alert d-none" role="alert"></div>
         <div id="activityList" class="activity-list"></div>
+      </div>
+      <div class="panel-card mb-4">
+        <h2 class="h5">Consultas e exames</h2>
+        <div id="apptList" class="history-list text-secondary small">Carregando consultas e exames...</div>
       </div>
       <div class="panel-card">
         <h2 class="h5">Medicamentos</h2>

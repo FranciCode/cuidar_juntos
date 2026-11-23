@@ -7,36 +7,144 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/css/styles.css">
 </head>
-<body class="page">
-  <h1>Pessoa assistida</h1>
-  <p><a href="/pages/index.html">Início</a></p>
-
-  <section id="dados" aria-live="polite">
-    <p id="vazio" hidden>Nenhuma pessoa cadastrada</p>
-    <dl id="pessoa" hidden>
-      <dt>Nome</dt><dd id="p-nome"></dd>
-      <dt>Nascimento</dt><dd id="p-nascimento"></dd>
-      <dt>Status</dt><dd id="p-status"></dd>
-    </dl>
-    <div id="acoes-admin" hidden>
-      <button type="button" id="btn-nova">Nova pessoa</button>
-      <button type="button" id="btn-editar" hidden>Editar</button>
-      <button type="button" id="btn-desativar" hidden>Desativar</button>
-      <button type="button" id="btn-reativar" hidden>Reativar</button>
+<body>
+  <header class="topbar">
+    <div class="container d-flex align-items-center justify-content-between py-3">
+      <a class="brand" href="/">Cuidar<span>Juntos</span></a>
     </div>
-  </section>
+  </header>
+  <main class="container py-4">
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
+      <div>
+        <div class="eyebrow">PESSOA ASSISTIDA</div>
+        <h1 class="h2 mt-1">Ficha de Identificação da Pessoa Assistida</h1>
+      </div>
+      <a class="btn btn-outline-secondary" href="/">Voltar ao início</a>
+    </div>
 
-  <form id="form" hidden novalidate>
-    <h2 id="form-titulo"></h2>
-    <label>Nome <input type="text" id="f-nome" maxlength="120" required></label>
-    <label>Data de nascimento <input type="date" id="f-nascimento" required></label>
-    <label id="l-consentimento"><input type="checkbox" id="f-consentimento"> Declaro que há consentimento para o cadastro</label>
-    <p class="erro" id="erro" role="alert"></p>
-    <button type="submit">Salvar</button>
-    <button type="button" id="btn-cancelar">Cancelar</button>
-  </form>
+    <div class="alert alert-danger" id="erro-geral" role="alert" hidden></div>
 
-  <p class="erro" id="erro-geral" role="alert"></p>
+    <section id="dados" aria-live="polite">
+      <p id="vazio" class="text-secondary" hidden>Nenhuma pessoa cadastrada</p>
+      <div id="pessoa" hidden>
+        <div class="panel-card mb-3">
+          <h2 class="h5">1. Identificação</h2>
+          <dl class="row mb-0 small">
+            <dt class="col-sm-4">Nome completo</dt><dd class="col-sm-8" id="p-nome"></dd>
+            <dt class="col-sm-4">Data de nascimento</dt><dd class="col-sm-8" id="p-nascimento"></dd>
+            <dt class="col-sm-4">Idade</dt><dd class="col-sm-8" id="p-idade"></dd>
+            <dt class="col-sm-4">CPF</dt><dd class="col-sm-8" id="p-cpf"></dd>
+            <dt class="col-sm-4">RG</dt><dd class="col-sm-8" id="p-rg"></dd>
+            <dt class="col-sm-4">Cartão Nacional de Saúde (Cartão SUS)</dt><dd class="col-sm-8" id="p-cartao_sus"></dd>
+            <dt class="col-sm-4">Sexo</dt><dd class="col-sm-8" id="p-sexo"></dd>
+            <dt class="col-sm-4">Estado civil</dt><dd class="col-sm-8" id="p-estado_civil"></dd>
+            <dt class="col-sm-4">Status</dt><dd class="col-sm-8" id="p-status"></dd>
+          </dl>
+        </div>
+        <div class="panel-card mb-3">
+          <h2 class="h5">2. Informações de contato e endereço</h2>
+          <dl class="row mb-0 small">
+            <dt class="col-sm-4">Endereço completo</dt><dd class="col-sm-8" id="p-endereco"></dd>
+          </dl>
+        </div>
+        <div class="panel-card mb-3">
+          <h2 class="h5">3. Contatos de emergência</h2>
+          <dl class="row mb-0 small">
+            <dt class="col-sm-4">Nome</dt><dd class="col-sm-8" id="p-emergencia_nome"></dd>
+            <dt class="col-sm-4">Grau de parentesco</dt><dd class="col-sm-8" id="p-emergencia_parentesco"></dd>
+            <dt class="col-sm-4">Telefone</dt><dd class="col-sm-8" id="p-emergencia_telefone"></dd>
+          </dl>
+        </div>
+        <div class="panel-card mb-3">
+          <h2 class="h5">4. Informações importantes</h2>
+          <dl class="row mb-0 small">
+            <dt class="col-sm-4">Tipo sanguíneo (se conhecido)</dt><dd class="col-sm-8" id="p-tipo_sanguineo"></dd>
+            <dt class="col-sm-4">Alergias conhecidas</dt><dd class="col-sm-8" id="p-alergias"></dd>
+            <dt class="col-sm-4">Condições de saúde conhecidas</dt><dd class="col-sm-8" id="p-condicoes_saude"></dd>
+            <dt class="col-sm-4">Medicamentos de uso contínuo</dt><dd class="col-sm-8" id="p-medicamentos_continuos"></dd>
+            <dt class="col-sm-4">Possui alguma restrição ou cuidado importante?</dt><dd class="col-sm-8" id="p-restricoes"></dd>
+          </dl>
+        </div>
+        <div class="panel-card mb-3 small">
+          <div><strong>Data da última atualização:</strong> <span id="p-atualizado_em"></span></div>
+          <div><strong>Responsável pela atualização:</strong> <span id="p-atualizado_por"></span></div>
+        </div>
+      </div>
+      <div id="acoes-admin" class="d-flex flex-wrap gap-2 mb-3" hidden>
+        <button type="button" class="btn btn-primary" id="btn-nova">Nova pessoa</button>
+        <button type="button" class="btn btn-outline-primary" id="btn-editar" hidden>Editar</button>
+        <button type="button" class="btn btn-outline-danger" id="btn-desativar" hidden>Desativar</button>
+        <button type="button" class="btn btn-outline-success" id="btn-reativar" hidden>Reativar</button>
+      </div>
+    </section>
+
+    <form id="form" class="panel-card mb-3" hidden novalidate>
+      <h2 id="form-titulo" class="h5"></h2>
+      <h3 class="h6 mt-3">1. Identificação</h3>
+      <div class="row g-3">
+        <div class="col-md-8"><label class="form-label">Nome completo <input class="form-control" type="text" id="f-nome" maxlength="120" required></label></div>
+        <div class="col-md-4"><label class="form-label">Data de nascimento <input class="form-control" type="date" id="f-nascimento" required></label></div>
+        <div class="col-md-4"><label class="form-label">CPF <input class="form-control" type="text" id="f-cpf" maxlength="14"></label></div>
+        <div class="col-md-4"><label class="form-label">RG <input class="form-control" type="text" id="f-rg" maxlength="20"></label></div>
+        <div class="col-md-4"><label class="form-label">Cartão SUS <input class="form-control" type="text" id="f-cartao_sus" maxlength="15"></label></div>
+        <div class="col-md-6">
+          <label class="form-label">Sexo
+            <select class="form-select" id="f-sexo">
+              <option value="">Não informado</option>
+              <option>Feminino</option>
+              <option>Masculino</option>
+              <option>Outro</option>
+            </select>
+          </label>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Estado civil
+            <select class="form-select" id="f-estado_civil">
+              <option value="">Não informado</option>
+              <option>Solteiro(a)</option>
+              <option>Casado(a)</option>
+              <option>União estável</option>
+              <option>Divorciado(a)</option>
+              <option>Viúvo(a)</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <h3 class="h6 mt-3">2. Informações de contato e endereço</h3>
+      <label class="form-label w-100">Endereço completo <textarea class="form-control" id="f-endereco" maxlength="300" rows="2"></textarea></label>
+      <h3 class="h6 mt-3">3. Contatos de emergência</h3>
+      <div class="row g-3">
+        <div class="col-md-5"><label class="form-label">Nome <input class="form-control" type="text" id="f-emergencia_nome" maxlength="120"></label></div>
+        <div class="col-md-3"><label class="form-label">Grau de parentesco <input class="form-control" type="text" id="f-emergencia_parentesco" maxlength="60"></label></div>
+        <div class="col-md-4"><label class="form-label">Telefone <input class="form-control" type="tel" id="f-emergencia_telefone" maxlength="20"></label></div>
+      </div>
+      <h3 class="h6 mt-3">4. Informações importantes</h3>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Tipo sanguíneo (se conhecido)
+            <select class="form-select" id="f-tipo_sanguineo">
+              <option value="">Desconhecido</option>
+              <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+            </select>
+          </label>
+        </div>
+        <div class="col-12"><label class="form-label w-100">Alergias conhecidas <textarea class="form-control" id="f-alergias" maxlength="500" rows="2"></textarea></label></div>
+        <div class="col-12"><label class="form-label w-100">Condições de saúde conhecidas <textarea class="form-control" id="f-condicoes_saude" maxlength="500" rows="2"></textarea></label></div>
+        <div class="col-12"><label class="form-label w-100">Medicamentos de uso contínuo <textarea class="form-control" id="f-medicamentos_continuos" maxlength="500" rows="2"></textarea></label></div>
+        <div class="col-12"><label class="form-label w-100">Possui alguma restrição ou cuidado importante? <textarea class="form-control" id="f-restricoes" maxlength="500" rows="2"></textarea></label></div>
+      </div>
+      <label class="form-check mt-3" id="l-consentimento"><input class="form-check-input" type="checkbox" id="f-consentimento"> Declaro que há consentimento para o cadastro</label>
+      <div class="alert alert-danger mt-3" id="erro" role="alert" hidden></div>
+      <div class="d-flex gap-2 mt-3">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        <button type="button" class="btn btn-outline-secondary" id="btn-cancelar">Cancelar</button>
+      </div>
+    </form>
+
+    <p class="small text-secondary fst-italic">Esta ficha é informativa e não substitui documentos oficiais, prescrições, prontuários ou avaliação de profissionais de saúde.</p>
+  </main>
+  <footer class="container py-4 small text-secondary">Cuidar Juntos · Projeto Tecnológico em Desenvolvimento de Sistemas</footer>
   <script src="/js/pessoa.js"></script>
 </body>
 </html>

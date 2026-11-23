@@ -1,5 +1,10 @@
 const CAMPOS = `c.id_compromisso, c.id_pessoa, p.nome AS pessoa, c.tipo, c.descricao,
-  DATE_FORMAT(c.data_hora, '%Y-%m-%dT%H:%i:%s') AS data_hora, c.observacao`;
+  DATE_FORMAT(c.data_hora, '%Y-%m-%dT%H:%i:%s') AS data_hora, c.observacao,
+  c.status, c.id_responsavel, u.nome AS responsavel`;
+
+const JOINS = `FROM COMPROMISSO c
+     JOIN PESSOA_ASSISTIDA p ON p.id_pessoa = c.id_pessoa
+     LEFT JOIN USUARIO u ON u.id_usuario = c.id_responsavel`;
 
 async function listar(db, idUsuario, idPessoa) {
   const params = [idUsuario];
@@ -10,8 +15,7 @@ async function listar(db, idUsuario, idPessoa) {
   }
   const [rows] = await db.execute(
     `SELECT ${CAMPOS}
-     FROM COMPROMISSO c
-     JOIN PESSOA_ASSISTIDA p ON p.id_pessoa = c.id_pessoa
+     ${JOINS}
      JOIN USUARIO_PESSOA up ON up.id_pessoa = c.id_pessoa AND up.id_usuario = ?
      WHERE 1 = 1${filtro}
      ORDER BY c.data_hora ASC, c.id_compromisso ASC`,
@@ -23,8 +27,7 @@ async function listar(db, idUsuario, idPessoa) {
 async function buscarDetalhe(db, id) {
   const [rows] = await db.execute(
     `SELECT ${CAMPOS}
-     FROM COMPROMISSO c
-     JOIN PESSOA_ASSISTIDA p ON p.id_pessoa = c.id_pessoa
+     ${JOINS}
      WHERE c.id_compromisso = ?`,
     [id]
   );
@@ -33,7 +36,7 @@ async function buscarDetalhe(db, id) {
 
 async function buscarBloqueado(db, id) {
   const [rows] = await db.execute(
-    "SELECT id_compromisso, id_pessoa FROM COMPROMISSO WHERE id_compromisso = ? FOR UPDATE",
+    "SELECT id_compromisso, id_pessoa, status, id_responsavel FROM COMPROMISSO WHERE id_compromisso = ? FOR UPDATE",
     [id]
   );
   return rows[0] || null;
@@ -62,8 +65,14 @@ async function atualizar(db, id, tipo, descricao, dataHora, observacao) {
   );
 }
 
+async function mudarSituacao(db, id, status, idResponsavel) {
+  await db.execute("UPDATE COMPROMISSO SET status = ?, id_responsavel = ? WHERE id_compromisso = ?", [
+    status, idResponsavel, id
+  ]);
+}
+
 async function excluir(db, id) {
   await db.execute("DELETE FROM COMPROMISSO WHERE id_compromisso = ?", [id]);
 }
 
-module.exports = { listar, buscarDetalhe, buscarBloqueado, existeConflito, inserir, atualizar, excluir };
+module.exports = { listar, buscarDetalhe, buscarBloqueado, existeConflito, inserir, atualizar, excluir, mudarSituacao };

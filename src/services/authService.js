@@ -2,6 +2,8 @@ const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const usuarioRepository = require("../repositories/usuarioRepository");
 const conviteRepository = require("../repositories/conviteRepository");
+const redefinicaoRepository = require("../repositories/redefinicaoSenhaRepository");
+const historicoRepository = require("../repositories/historicoRepository");
 
 const MAX_FALHAS = 5;
 const BLOQUEIO_MINUTOS = 15;
@@ -151,4 +153,24 @@ async function cadastrar(pool, { nome: nomeBruto, email: emailBruto, senha: senh
   return cadastrarPrimeiroAdmin(pool, { nome, email, senhaHash });
 }
 
-module.exports = { login, cadastrar, hashToken, MAX_FALHAS, BLOQUEIO_MINUTOS };
+async function redefinirSenha(pool, { token: tokenBruto, senha: senhaBruta } = {}) {
+  const token = typeof tokenBruto === "string" ? tokenBruto.trim() : "";
+  const senha = String(senhaBruta || "");
+  const invalido = { status: 400, body: { error: "Link inválido ou expirado." } };
+  if (!token) return invalido;
+  if (senha.length < 8) return { status: 400, body: { error: "A senha deve ter ao menos 8 caracteres." } };
+  const senhaHash = await bcrypt.hash(senha, 10);
+  return executarTransacao(pool, async (conn) => {
+    const agora = new Date();
+    const redef = await redefinicaoRepository.buscarPorHashParaAtualizar(conn, hashToken(token));
+    if (!redef || redef.usado_em || new Date(redef.expira_em) <= agora) return invalido;
+    const user = await usuarioRepository.buscarPorId(conn, redef.id_usuario);
+    if (!user || user.status !== "ATIVO") return invalido;
+    if (!(await redefinicaoRepository.consumir(conn, redef.id_redefinicao, agora))) return invalido;
+    await usuarioRepository.atualizarSenha(conn, user.id_usuario, senhaHash);
+    await historicoRepository.registrar(conn, { idUsuario: user.id_usuario, acao: "SENHA_REDEFINIDA", idRegistro: user.id_usuario, detalhes: "Senha redefinida pelo próprio usuário" });
+    return { status: 200, body: { ok: true } };
+  });
+}
+
+module.exports = { login, cadastrar, redefinirSenha, hashToken, MAX_FALHAS, BLOQUEIO_MINUTOS };

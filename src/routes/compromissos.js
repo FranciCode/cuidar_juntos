@@ -9,5 +9,6 @@ module.exports = (getPool) => {
   router.post("/", requireRole("ADMIN"), compromissoController.criar(getPool));
   router.put("/:id", requireRole("ADMIN"), compromissoController.editar(getPool));
   router.delete("/:id", requireRole("ADMIN"), compromissoController.excluir(getPool));
+  router.post("/:id/acao/:nome", compromissoController.acaoNome(getPool));
   return router;
 };

@@ -95,4 +95,11 @@ async function atualizarStatus(db, id, status) {
   await db.execute("UPDATE USUARIO SET status = ? WHERE id_usuario = ?", [status, id]);
 }
 
-module.exports = { buscarPorEmail, registrarFalha, zerarFalhas, listar, buscarPorId, buscarPorIdParaAtualizar, emailExiste, contarAdminsAtivosParaAtualizar, existeAdmin, pessoaUnica, pessoasDoUsuario, inserir, vincularPessoa, atualizar, atualizarPermissao, atualizarStatus };
+async function atualizarSenha(db, id, senhaHash) {
+  await db.execute(
+    "UPDATE USUARIO SET senha_hash = ?, tentativas_falhas = 0, bloqueado_ate = NULL WHERE id_usuario = ?",
+    [senhaHash, id]
+  );
+}
+
+module.exports = { buscarPorEmail, registrarFalha, zerarFalhas, listar, buscarPorId, buscarPorIdParaAtualizar, emailExiste, contarAdminsAtivosParaAtualizar, existeAdmin, pessoaUnica, pessoasDoUsuario, inserir, vincularPessoa, atualizar, atualizarPermissao, atualizarStatus, atualizarSenha };

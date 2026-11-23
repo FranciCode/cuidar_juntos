@@ -20,6 +20,22 @@ CREATE TABLE IF NOT EXISTS PESSOA_ASSISTIDA (
   data_nascimento DATE NULL,
   consentimento_registrado BOOLEAN NOT NULL DEFAULT FALSE,
   status ENUM('ATIVO','INATIVO') NOT NULL DEFAULT 'ATIVO',
+  cpf VARCHAR(14) NULL,
+  rg VARCHAR(20) NULL,
+  cartao_sus VARCHAR(15) NULL,
+  sexo VARCHAR(20) NULL,
+  estado_civil VARCHAR(30) NULL,
+  endereco VARCHAR(300) NULL,
+  emergencia_nome VARCHAR(120) NULL,
+  emergencia_parentesco VARCHAR(60) NULL,
+  emergencia_telefone VARCHAR(20) NULL,
+  tipo_sanguineo VARCHAR(10) NULL,
+  alergias VARCHAR(500) NULL,
+  condicoes_saude VARCHAR(500) NULL,
+  medicamentos_continuos VARCHAR(500) NULL,
+  restricoes VARCHAR(500) NULL,
+  atualizado_em DATETIME NULL,
+  atualizado_por INT UNSIGNED NULL,
   criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -48,12 +64,25 @@ CREATE TABLE IF NOT EXISTS CONVITE (
   CONSTRAINT fk_convite_criado_por FOREIGN KEY (criado_por) REFERENCES USUARIO(id_usuario)
 );
 
+CREATE TABLE IF NOT EXISTS REDEFINICAO_SENHA (
+  id_redefinicao INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  token_hash CHAR(64) NOT NULL UNIQUE,
+  id_usuario INT UNSIGNED NOT NULL,
+  expira_em DATETIME NOT NULL,
+  usado_em DATETIME NULL,
+  criado_por INT UNSIGNED NULL,
+  criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_redef_usuario FOREIGN KEY (id_usuario) REFERENCES USUARIO(id_usuario),
+  CONSTRAINT fk_redef_criado_por FOREIGN KEY (criado_por) REFERENCES USUARIO(id_usuario)
+);
+
 CREATE TABLE IF NOT EXISTS ATIVIDADE (
   id_atividade INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   id_pessoa INT UNSIGNED NOT NULL,
   titulo VARCHAR(150) NOT NULL,
   descricao VARCHAR(500) NULL,
   data_hora DATETIME NULL,
+  dias_semana VARCHAR(20) NULL,
   status ENUM('PENDENTE','ASSUMIDA','CONCLUIDA','CANCELADA') NOT NULL DEFAULT 'PENDENTE',
   criado_por INT UNSIGNED NOT NULL,
   criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -84,7 +113,9 @@ CREATE TABLE IF NOT EXISTS MEDICAMENTO (
   dose VARCHAR(100) NULL,
   frequencia VARCHAR(100) NULL,
   horarios VARCHAR(200) NULL,
+  id_responsavel INT UNSIGNED NULL,
   criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_medicamento_responsavel FOREIGN KEY (id_responsavel) REFERENCES USUARIO(id_usuario),
   CONSTRAINT fk_medicamento_pessoa FOREIGN KEY (id_pessoa) REFERENCES PESSOA_ASSISTIDA(id_pessoa)
 );
 
@@ -105,6 +136,9 @@ CREATE TABLE IF NOT EXISTS COMPROMISSO (
   descricao VARCHAR(250) NOT NULL,
   data_hora DATETIME NOT NULL,
   observacao VARCHAR(500) NULL,
+  status ENUM('PENDENTE','CONCLUIDA','CANCELADA') NOT NULL DEFAULT 'PENDENTE',
+  id_responsavel INT UNSIGNED NULL,
+  CONSTRAINT fk_compromisso_responsavel FOREIGN KEY (id_responsavel) REFERENCES USUARIO(id_usuario),
   CONSTRAINT fk_compromisso_pessoa FOREIGN KEY (id_pessoa) REFERENCES PESSOA_ASSISTIDA(id_pessoa)
 );
 

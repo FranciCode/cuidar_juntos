@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -9,7 +9,7 @@
 </head>
 <body class="page">
   <h1>Agenda</h1>
-  <p><a href="/pages/index.html">Início</a> · <a href="/pages/painel.html">Painel</a> · <a href="/pages/historico.html">Histórico</a></p>
+  <p><a href="/pages/index.html">Início</a> · <a href="/pages/historico.html">Histórico</a></p>
   <p class="erro" id="erro" role="alert"></p>
   <form id="filtros" novalidate>
     <label>De <input type="date" id="f-de"></label>
@@ -28,7 +28,7 @@
   </form>
   <p id="vazio" hidden>Nenhum item na agenda</p>
   <table id="tabela">
-    <thead><tr><th>Origem</th><th>Título</th><th>Data e hora</th><th>Status</th><th>Pessoa</th></tr></thead>
+    <thead><tr><th>Origem</th><th>Título</th><th>Data e hora</th><th>Status</th><th>Pessoa assistida</th></tr></thead>
     <tbody id="itens"></tbody>
   </table>
   <script src="/js/agenda.js"></script>
