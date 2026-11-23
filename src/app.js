@@ -95,6 +95,7 @@ app.use("/api/pessoas", require("./routes/pessoas")(getPool));
 app.use("/api/medicamentos", require("./routes/medicamentos")(getPool));
 app.use("/api/ocorrencias", require("./routes/ocorrencias")(getPool));
 app.use("/api/agenda", require("./routes/agenda")(getPool));
+app.use("/api/painel", require("./routes/painel")(getPool));
 app.use("/api/historico", require("./routes/historico")(getPool));
 
 app.post("/api/logout", (req, res) => {
