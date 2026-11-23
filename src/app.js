@@ -8,10 +8,19 @@ const mysql = require("mysql2/promise");
 
 const app = express();
 
+const behindProxy = process.env.NODE_ENV === "production" || !!process.env.VERCEL;
+if (behindProxy) app.set("trust proxy", 1);
+
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+const sessionStore = behindProxy && process.env.NODE_ENV !== "test"
+  ? new (require("./utils/mysqlSessionStore")(session))(() => getPool())
+  : undefined;
+
 app.use(session({
+  store: sessionStore,
+  proxy: behindProxy ? true : undefined,
   name: "cuidarjuntos.sid",
   secret: process.env.SESSION_SECRET || "somente-desenvolvimento-altere-esta-chave",
   resave: false,
@@ -19,7 +28,7 @@ app.use(session({
   cookie: {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: behindProxy,
     maxAge: 1000 * 60 * 60 * 4
   }
 }));
