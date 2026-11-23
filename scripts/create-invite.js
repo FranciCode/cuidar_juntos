@@ -2,6 +2,7 @@ require("dotenv").config();
 const crypto = require("crypto");
 const mysql = require("mysql2/promise");
 const readline = require("readline/promises");
+const { montarLink } = require("../src/urlSite");
 const { stdin: input, stdout: output } = require("process");
 
 const PERFIS = ["ADMIN", "COLABORADOR", "PESSOA_ASSISTIDA"];
@@ -40,7 +41,7 @@ const MAX_HORAS = 7 * 24;
       [tokenHash, email, perfil, idPessoa, expiraEm]
     );
     console.log("Convite criado. O código abaixo é exibido uma única vez; compartilhe-o manualmente:");
-    console.log(token);
+    console.log(montarLink("convite", token));
     console.log(`Válido até ${expiraEm.toLocaleString("pt-BR")}.`);
   } catch (error) {
     console.error("Não foi possível criar o convite:", error.message);
