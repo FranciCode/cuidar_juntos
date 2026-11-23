@@ -21,6 +21,17 @@
     <label>Título <input type="text" id="f-titulo" maxlength="150" required></label>
     <label>Descrição <textarea id="f-descricao" maxlength="500" rows="3"></textarea></label>
     <label>Data e hora <input type="datetime-local" id="f-data"></label>
+    <label><input type="checkbox" id="f-diaria"> Atividade diária</label>
+    <fieldset id="f-dias" hidden>
+      <legend>Dias da atividade</legend>
+      <label><input type="checkbox" name="dia" value="0"> Dom</label>
+      <label><input type="checkbox" name="dia" value="1"> Seg</label>
+      <label><input type="checkbox" name="dia" value="2"> Ter</label>
+      <label><input type="checkbox" name="dia" value="3"> Qua</label>
+      <label><input type="checkbox" name="dia" value="4"> Qui</label>
+      <label><input type="checkbox" name="dia" value="5"> Sex</label>
+      <label><input type="checkbox" name="dia" value="6"> Sáb</label>
+    </fieldset>
     <p class="erro" id="erro" role="alert"></p>
     <button type="submit">Salvar</button>
     <button type="button" id="btn-cancelar-form">Cancelar</button>
@@ -29,7 +40,7 @@
   <p id="vazio" hidden>Nenhuma atividade cadastrada</p>
   <table id="tabela" hidden>
     <thead>
-      <tr><th>Título</th><th>Data e hora</th><th>Status</th><th>Responsável</th><th>Ações</th></tr>
+      <tr><th>Pessoa assistida</th><th>Título</th><th>Data e hora</th><th>Status</th><th>Responsável</th><th>Ações</th></tr>
     </thead>
     <tbody id="corpo"></tbody>
   </table>

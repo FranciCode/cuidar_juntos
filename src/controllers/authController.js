@@ -1,4 +1,5 @@
 const authService = require("../services/authService");
+const usuarioRepository = require("../repositories/usuarioRepository");
 
 function iniciarSessao(req, user) {
   return new Promise((resolve, reject) => {
@@ -37,4 +38,26 @@ function cadastrar(getPool) {
   };
 }
 
-module.exports = { login, cadastrar };
+function redefinirSenha(getPool) {
+  return async (req, res) => {
+    try {
+      const result = await authService.redefinirSenha(await getPool(), req.body || {});
+      res.status(result.status).json(result.body);
+    } catch (_error) {
+      res.status(500).json({ error: "Não foi possível redefinir a senha." });
+    }
+  };
+}
+
+function estado(getPool) {
+  return async (_req, res) => {
+    try {
+      const db = await getPool();
+      res.json({ primeiro_acesso: !(await usuarioRepository.existeAdmin(db)) });
+    } catch (_error) {
+      res.json({ primeiro_acesso: false });
+    }
+  };
+}
+
+module.exports = { login, cadastrar, redefinirSenha, estado };

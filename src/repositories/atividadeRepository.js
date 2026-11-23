@@ -1,10 +1,11 @@
 const COLUNAS = `a.id_atividade, a.id_pessoa, a.titulo, a.descricao,
-  DATE_FORMAT(a.data_hora, '%Y-%m-%dT%H:%i') AS data_hora, a.status, a.criado_por,
-  r.id_usuario AS id_responsavel, u.nome AS responsavel`;
+  DATE_FORMAT(a.data_hora, '%Y-%m-%dT%H:%i') AS data_hora, a.dias_semana, a.status, a.criado_por,
+  r.id_usuario AS id_responsavel, u.nome AS responsavel, pa.nome AS pessoa`;
 
 const JOINS = `FROM ATIVIDADE a
   LEFT JOIN RESPONSABILIDADE r ON r.id_atividade = a.id_atividade AND r.liberada_em IS NULL
-  LEFT JOIN USUARIO u ON u.id_usuario = r.id_usuario`;
+  LEFT JOIN USUARIO u ON u.id_usuario = r.id_usuario
+  LEFT JOIN PESSOA_ASSISTIDA pa ON pa.id_pessoa = a.id_pessoa`;
 
 async function listar(db, idUsuario, status) {
   const params = [idUsuario];
@@ -43,17 +44,17 @@ async function responsavelAtivo(db, id) {
   return rows[0] || null;
 }
 
-async function inserir(db, idPessoa, titulo, descricao, dataHora, criadoPor) {
+async function inserir(db, idPessoa, titulo, descricao, dataHora, criadoPor, diasSemana = null) {
   const [result] = await db.execute(
-    "INSERT INTO ATIVIDADE (id_pessoa, titulo, descricao, data_hora, status, criado_por) VALUES (?, ?, ?, ?, 'PENDENTE', ?)",
-    [idPessoa, titulo, descricao, dataHora, criadoPor]
+    "INSERT INTO ATIVIDADE (id_pessoa, titulo, descricao, data_hora, dias_semana, status, criado_por) VALUES (?, ?, ?, ?, ?, 'PENDENTE', ?)",
+    [idPessoa, titulo, descricao, dataHora, diasSemana, criadoPor]
   );
   return result.insertId;
 }
 
-async function atualizarDados(db, id, titulo, descricao, dataHora) {
-  await db.execute("UPDATE ATIVIDADE SET titulo = ?, descricao = ?, data_hora = ? WHERE id_atividade = ?", [
-    titulo, descricao, dataHora, id
+async function atualizarDados(db, id, titulo, descricao, dataHora, diasSemana = null) {
+  await db.execute("UPDATE ATIVIDADE SET titulo = ?, descricao = ?, data_hora = ?, dias_semana = ? WHERE id_atividade = ?", [
+    titulo, descricao, dataHora, diasSemana, id
   ]);
 }
 

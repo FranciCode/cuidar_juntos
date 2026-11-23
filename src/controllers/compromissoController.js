@@ -30,4 +30,10 @@ const criar = (getPool) => handler(getPool, (db, req) => compromissoService.cria
 const editar = (getPool) => comId(getPool, (db, u, id, corpo) => compromissoService.editar(db, u, id, corpo));
 const excluir = (getPool) => comId(getPool, (db, u, id) => compromissoService.excluir(db, u, id));
 
-module.exports = { listar, criar, editar, excluir };
+const acaoNome = (getPool) => handler(getPool, (db, req) => {
+  const id = idDe(req);
+  if (!id) return { status: 404, body: { error: "Compromisso não encontrado." } };
+  return compromissoService.acao(db, req.session.user, id, String(req.params.nome));
+});
+
+module.exports = { listar, criar, editar, excluir, acaoNome };

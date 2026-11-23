@@ -55,4 +55,21 @@ body.page .aviso { color: #7a5200; }
 body.page .contagens { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
 body.page .contagens div { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: .8rem 1.25rem; min-width: 8rem; color: var(--muted); }
 body.page .contagens strong { display: block; font-size: 1.8rem; color: var(--ink); }
+body.page.page-wide { max-width: none; width: 100%; overflow-x: hidden; }
+.conteudo-centralizado { width: 100%; max-width: none; margin: 0 auto; padding: 0 1.5rem; box-sizing: border-box; }
+.conteudo-centralizado > p, .conteudo-centralizado > h1 { text-align: left; }
+.conteudo-centralizado > h1 { text-align: center; }
+.tabela-scroll { width: 100%; overflow-x: visible; margin: 1rem 0; }
+.tabela-scroll table { margin: 0; min-width: 0; width: 100%; table-layout: fixed; }
+.tabela-scroll td, .tabela-scroll th { vertical-align: top; padding: .5rem .5rem !important; overflow-wrap: anywhere; word-break: break-word; white-space: normal !important; min-width: 0 !important; max-width: none !important; }
+.tabela-scroll #tabela th:nth-child(1) { width: 10%; }
+.tabela-scroll #tabela th:nth-child(2) { width: 10%; }
+.tabela-scroll #tabela th:nth-child(3) { width: 20%; }
+.tabela-scroll #tabela th:nth-child(4) { width: 8%; }
+.tabela-scroll #tabela th:nth-child(5) { width: 9%; }
+.tabela-scroll #tabela th:nth-child(6) { width: 11%; }
+.tabela-scroll #tabela th:nth-child(7) { width: 10%; }
+.tabela-scroll #tabela th:nth-child(8) { width: 22%; }
+.tabela-scroll td:last-child > div { flex-wrap: wrap !important; }
+.tabela-scroll td:last-child button { margin: 0 !important; white-space: normal; }
 [hidden] { display: none !important; }

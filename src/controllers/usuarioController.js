@@ -41,4 +41,13 @@ const alterarStatus = (getPool) => async (req, res) => {
   } catch (error) { tratar(res, error); }
 };
 
-module.exports = { listar, criar, editar, alterarStatus };
+const gerarRedefinicao = (getPool) => async (req, res) => {
+  const id = idParam(req);
+  if (!id) return res.status(404).json({ error: "Usuário não encontrado." });
+  try {
+    const redefinicao = await usuarioService.gerarRedefinicao(await getPool(), req.session.user, id);
+    res.status(201).json(redefinicao);
+  } catch (error) { tratar(res, error); }
+};
+
+module.exports = { listar, criar, editar, alterarStatus, gerarRedefinicao };

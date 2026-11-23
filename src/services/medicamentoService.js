@@ -136,10 +136,27 @@ async function registrarAdministracao(db, usuario, id, dados, agora) {
     const valido = validarAdministracao(dados, agora);
     if (valido.erro) falha(400, valido.erro);
 
+    if (await medicamentoRepository.buscarAdministracaoOutroUsuario(conn, id, usuario.id, valido.dataHora)) {
+      falha(409, 'Este medicamento já tem outra pessoa responsável neste dia e horário.');
+    }
     const idAdm = await medicamentoRepository.inserirAdministracao(conn, id, usuario.id, valido.dataHora, valido.observacao);
     await historicoRepository.registrarEntidade(conn, usuario.id, "ADMINISTRACAO_REGISTRADA", ENTIDADE_ADMINISTRACAO, idAdm);
     const administracao = await medicamentoRepository.buscarAdministracao(conn, idAdm);
     return { status: 201, body: { administracao } };
+  });
+}
+
+async function assumir(db, usuario, id) {
+  return executar(db, async (conn) => {
+    const { vinculo } = await carregar(conn, usuario, id);
+    const logado = await usuarioRepository.buscarPorId(conn, usuario.id);
+    if (!logado || logado.status !== "ATIVO") falha(403, "Acesso negado.");
+    if (usuario.perfil !== "ADMIN" && !vinculo.pode_registrar_administracao) falha(403, "Sem permissão para assumir este medicamento.");
+    if (!(await medicamentoRepository.assumir(conn, id, usuario.id))) {
+      falha(409, "Este medicamento já tem um responsável.");
+    }
+    await historicoRepository.registrarEntidade(conn, usuario.id, "MEDICAMENTO_ASSUMIDO", ENTIDADE_MEDICAMENTO, id);
+    return { status: 200, body: { ok: true } };
   });
 }
 
@@ -152,6 +169,6 @@ async function listarAdministracoes(db, usuario, id) {
 }
 
 module.exports = {
-  listar, criar, editar, excluir, registrarAdministracao, listarAdministracoes,
+  listar, criar, editar, excluir, assumir, registrarAdministracao, listarAdministracoes,
   validarMedicamento, validarAdministracao
 };

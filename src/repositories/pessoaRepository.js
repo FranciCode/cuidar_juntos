@@ -1,4 +1,8 @@
-const COLUNAS = "p.id_pessoa, p.nome, p.data_nascimento, p.consentimento_registrado, p.data_consentimento, p.status";
+const FICHA_CAMPOS = ["cpf", "rg", "cartao_sus", "sexo", "estado_civil", "endereco", "emergencia_nome", "emergencia_parentesco", "emergencia_telefone", "tipo_sanguineo", "alergias", "condicoes_saude", "medicamentos_continuos", "restricoes"];
+
+const COLUNAS = `p.id_pessoa, p.nome, p.data_nascimento, p.consentimento_registrado, p.data_consentimento, p.status,
+  ${FICHA_CAMPOS.map((c) => "p." + c).join(", ")}, p.atualizado_em,
+  (SELECT nome FROM USUARIO WHERE id_usuario = p.atualizado_por) AS atualizado_por_nome`;
 
 async function existe(db, idPessoa) {
   const [rows] = await db.execute("SELECT id_pessoa FROM PESSOA_ASSISTIDA WHERE id_pessoa = ? LIMIT 1", [idPessoa]);
@@ -43,10 +47,11 @@ async function buscarDoUsuario(db, idPessoa, idUsuario) {
   return rows[0] || null;
 }
 
-async function inserir(db, nome, dataNascimento) {
+async function inserir(db, nome, dataNascimento, ficha = {}, idUsuario = null) {
   const [result] = await db.execute(
-    "INSERT INTO PESSOA_ASSISTIDA (nome, data_nascimento, consentimento_registrado, data_consentimento, status) VALUES (?, ?, 1, NOW(), 'ATIVO')",
-    [nome, dataNascimento]
+    `INSERT INTO PESSOA_ASSISTIDA (nome, data_nascimento, consentimento_registrado, data_consentimento, status, ${FICHA_CAMPOS.join(", ")}, atualizado_em, atualizado_por)
+     VALUES (?, ?, 1, NOW(), 'ATIVO', ${FICHA_CAMPOS.map(() => "?").join(", ")}, NOW(), ?)`,
+    [nome, dataNascimento, ...FICHA_CAMPOS.map((c) => ficha[c] ?? null), idUsuario]
   );
   return result.insertId;
 }
@@ -63,13 +68,14 @@ async function vincular(db, idUsuario, idPessoa, podeRegistrar) {
   );
 }
 
-async function atualizar(db, idPessoa, idUsuario, nome, dataNascimento) {
+async function atualizar(db, idPessoa, idUsuario, nome, dataNascimento, ficha = {}) {
   await db.execute(
     `UPDATE PESSOA_ASSISTIDA p
      JOIN USUARIO_PESSOA up ON up.id_pessoa = p.id_pessoa
-     SET p.nome = ?, p.data_nascimento = ?
+     SET p.nome = ?, p.data_nascimento = ?, ${FICHA_CAMPOS.map((c) => `p.${c} = ?`).join(", ")},
+       p.atualizado_em = NOW(), p.atualizado_por = ?
      WHERE p.id_pessoa = ? AND up.id_usuario = ?`,
-    [nome, dataNascimento, idPessoa, idUsuario]
+    [nome, dataNascimento, ...FICHA_CAMPOS.map((c) => ficha[c] ?? null), idUsuario, idPessoa, idUsuario]
   );
 }
 

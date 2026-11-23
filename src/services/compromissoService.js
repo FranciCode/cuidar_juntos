@@ -50,6 +50,18 @@ function validarDados(dados) {
   return { tipo, dataHora, descricao, observacao };
 }
 
+function agoraLocal() {
+  const tz = process.env.APP_TIMEZONE || process.env.TZ || undefined;
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+  }).formatToParts(new Date()).map((x) => [x.type, x.value]));
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+}
+
+function estaVencido(c, agora) {
+  return (c.status || "PENDENTE") === "PENDENTE" && String(c.data_hora).slice(0, 16) <= agora;
+}
+
 async function listar(db, usuario, idPessoaBruto) {
   let idPessoa = null;
   if (idPessoaBruto !== undefined) {
@@ -58,8 +70,11 @@ async function listar(db, usuario, idPessoaBruto) {
     }
     idPessoa = Number(idPessoaBruto);
   }
-  const compromissos = await compromissoRepository.listar(db, usuario.id, idPessoa);
-  return { status: 200, body: { compromissos } };
+  const agora = agoraLocal();
+  const compromissos = (await compromissoRepository.listar(db, usuario.id, idPessoa)).map((c) => ({
+    ...c, vencido: estaVencido(c, agora)
+  }));
+  return { status: 200, body: { compromissos, agora } };
 }
 
 async function criar(db, usuario, dados) {
@@ -113,4 +128,39 @@ async function excluir(db, usuario, id) {
   });
 }
 
-module.exports = { listar, criar, editar, excluir };
+async function acao(db, usuario, id, nome) {
+  return executar(db, async (conn) => {
+    const atual = await carregar(conn, usuario, id);
+    const admin = usuario.perfil === "ADMIN";
+    const ehResp = atual.id_responsavel === usuario.id;
+    let status;
+    let resp = atual.id_responsavel;
+    if (nome === "assumir") {
+      if (atual.status !== "PENDENTE" || atual.id_responsavel) falha(409, "Compromisso já tem responsável ou não está pendente.");
+      status = "PENDENTE";
+      resp = usuario.id;
+    } else if (nome === "liberar") {
+      if (atual.status !== "PENDENTE" || !atual.id_responsavel) falha(409, "Compromisso não tem responsável a liberar.");
+      if (!ehResp && !admin) falha(403, "Acesso negado.");
+      status = "PENDENTE";
+      resp = null;
+    } else if (nome === "concluir") {
+      if (atual.status !== "PENDENTE") falha(409, "Compromisso não está pendente.");
+      if (!ehResp && !admin) falha(403, "Acesso negado.");
+      status = "CONCLUIDA";
+      if (!resp) resp = usuario.id;
+    } else if (nome === "cancelar") {
+      if (!admin) falha(403, "Acesso negado.");
+      if (atual.status !== "PENDENTE") falha(409, "Compromisso não está pendente.");
+      status = "CANCELADA";
+    } else {
+      falha(400, "Ação inválida.");
+    }
+    await compromissoRepository.mudarSituacao(conn, id, status, resp);
+    await historicoRepository.registrarEntidade(conn, usuario.id, "COMPROMISSO_" + nome.toUpperCase(), ENTIDADE, id);
+    const compromisso = await compromissoRepository.buscarDetalhe(conn, id);
+    return { status: 200, body: { compromisso } };
+  });
+}
+
+module.exports = { listar, criar, editar, excluir, acao };

@@ -1,4 +1,4 @@
-require("dotenv").config();
+﻿require("dotenv").config();
 
 const express = require("express");
 const session = require("express-session");
@@ -81,7 +81,6 @@ app.use("/api/compromissos", require("./routes/compromissos")(getPool));
 app.use("/api/pessoas", require("./routes/pessoas")(getPool));
 app.use("/api/medicamentos", require("./routes/medicamentos")(getPool));
 app.use("/api/agenda", require("./routes/agenda")(getPool));
-app.use("/api/painel", require("./routes/painel")(getPool));
 app.use("/api/historico", require("./routes/historico")(getPool));
 
 app.post("/api/logout", (req, res) => {

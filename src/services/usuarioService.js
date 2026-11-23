@@ -1,9 +1,13 @@
-﻿const bcrypt = require("bcryptjs");
+﻿const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
+const redefinicaoRepository = require("../repositories/redefinicaoSenhaRepository");
 const usuarioRepository = require("../repositories/usuarioRepository");
 const historicoRepository = require("../repositories/historicoRepository");
+const { montarLink } = require("../urlSite");
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PERFIS = ["ADMIN", "PESSOA_ASSISTIDA", "COLABORADOR"];
+const REDEFINICAO_MINUTOS = 30;
 
 class HttpError extends Error {
   constructor(status, message) {
@@ -102,4 +106,19 @@ async function alterarStatus(pool, autor, id, status) {
   });
 }
 
-module.exports = { listar, criar, editar, alterarStatus, HttpError };
+async function gerarRedefinicao(pool, autor, id) {
+  return transacao(pool, async (conn) => {
+    const alvo = await usuarioRepository.buscarPorIdParaAtualizar(conn, id);
+    if (!alvo) throw new HttpError(404, "Usuário não encontrado.");
+    if (alvo.status !== "ATIVO") throw new HttpError(409, "Reative o usuário antes de redefinir a senha.");
+    const token = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const expiraEm = new Date(Date.now() + REDEFINICAO_MINUTOS * 60000);
+    await redefinicaoRepository.invalidarPendentes(conn, id);
+    await redefinicaoRepository.inserir(conn, { tokenHash, idUsuario: id, expiraEm, criadoPor: autor.id });
+    await historicoRepository.registrar(conn, { idUsuario: autor.id, acao: "SENHA_REDEFINICAO_GERADA", idRegistro: id, detalhes: "Link de redefinição de senha gerado" });
+    return { token, link: montarLink("redefinir", token), expira_em: expiraEm.toISOString() };
+  });
+}
+
+module.exports = { listar, criar, editar, alterarStatus, gerarRedefinicao, HttpError };
