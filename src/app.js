@@ -30,6 +30,10 @@ app.use((req, res, next) => {
   }
   next();
 });
+app.get("/js/config.js", (_req, res) => {
+  res.type("application/javascript");
+  res.send(`window.BASE_URL = ${JSON.stringify((process.env.URL_DOMINIO || "").replace(/\/+$/, ""))};`);
+});
 app.use(express.static(path.join(__dirname, "public")));
 
 let pool;

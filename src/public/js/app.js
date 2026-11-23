@@ -11,7 +11,7 @@ function hideMessage(element) {
   element.className = "alert d-none";
 }
 async function api(url, options = {}) {
-  const response = await fetch(url, {
+  const response = await fetch((window.BASE_URL || "") + url, {
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
     credentials: "same-origin",
     ...options

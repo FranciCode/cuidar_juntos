@@ -20,7 +20,7 @@ async function carregar(filtros = {}) {
   });
   const consulta = params.toString();
   try {
-    const resposta = await fetch(`/api/agenda${consulta ? `?${consulta}` : ""}`, { credentials: "same-origin" });
+    const resposta = await fetch((window.BASE_URL || "") + `/api/agenda${consulta ? `?${consulta}` : ""}`, { credentials: "same-origin" });
     const dados = await resposta.json().catch(() => ({}));
     if (!resposta.ok) throw new Error(dados.error || "Ocorreu um erro.");
     el("erro").textContent = "";
