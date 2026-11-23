@@ -5,7 +5,7 @@
   let modo = null;
 
   async function api(url, opcoes) {
-    const res = await fetch(url, {
+    const res = await fetch((window.BASE_URL || "") + url, {
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
       ...opcoes

@@ -20,7 +20,7 @@ function atualizarBotoes() {
 
 async function carregar(pagina) {
   try {
-    const resposta = await fetch(`/api/historico?pagina=${pagina}&limite=${LIMITE}`, { credentials: "same-origin" });
+    const resposta = await fetch((window.BASE_URL || "") + `/api/historico?pagina=${pagina}&limite=${LIMITE}`, { credentials: "same-origin" });
     const dados = await resposta.json().catch(() => ({}));
     if (!resposta.ok) throw new Error(dados.error || "Ocorreu um erro.");
     el("erro").textContent = "";

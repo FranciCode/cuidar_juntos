@@ -14,7 +14,7 @@ function esconder(el) {
   el.className = "alert d-none";
 }
 async function api(url, options = {}) {
-  const response = await fetch(url, {
+  const response = await fetch((window.BASE_URL || "") + url, {
     headers: { "Content-Type": "application/json" },
     credentials: "same-origin",
     ...options
@@ -105,7 +105,7 @@ $("usuariosBody").addEventListener("click", async (event) => {
   if (botao.dataset.acao === "redefinir") {
     try {
       const data = await api(`/api/usuarios/${id}/redefinicao`, { method: "POST" });
-      const link = `${window.location.origin}/?redefinir=${data.token}`;
+      const link = data.link;
       mostrar($("tabelaMensagem"), `Link para ${usuario.nome} (válido por 60 minutos, exibido uma única vez): ${link}`, "success");
     } catch (error) {
       mostrar($("tabelaMensagem"), error.message);
